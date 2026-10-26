@@ -1,6 +1,6 @@
 # PulseFlow
 
-PulseFlow is a self-hosted team task board with live capacity, smart dispatch, and focused blocker threads. The interface uses a dark dotted canvas, paper navigation, mint highlights, and cut-paper type. The graphics and product UI are original.
+PulseFlow is a self-hosted team task board with live capacity, smart dispatch, and focused blocker threads. The interface uses a light dotted canvas, paper navigation, mint highlights, cut-paper type, and gentle motion. The graphics and product UI are original.
 
 ## What works
 
