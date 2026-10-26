@@ -1,0 +1,5 @@
+import { requireUser } from '@/lib/access'
+import { prisma } from '@/lib/prisma'
+import { WorkspaceSetup } from '@/components/workspace-setup'
+import Link from 'next/link'
+export default async function Onboarding(){const user=await requireUser();const memberships=await prisma.membership.findMany({where:{userId:user.id},include:{workspace:true},orderBy:{joinedAt:'asc'}});return <main className="onboarding-page"><div className="onboarding-top"><Link href="/" className="site-brand">✳ pulseflow</Link><span>SETUP / 01</span></div><div className="onboarding-content"><span className="paper-label">THE FIRST STEP</span><h1>Give your team<br/><em>a place to flow.</em></h1><p>Create a workspace to hold tasks, capacity, and blocker conversations together. Invite people once you&apos;re inside.</p><WorkspaceSetup/>{memberships.length>0&&<div className="existing-workspaces"><span>OR RETURN TO A WORKSPACE</span>{memberships.map(m=><Link key={m.id} href={`/w/${m.workspace.slug}`}>{m.workspace.name} <span>↗</span></Link>)}</div>}</div><div className="onboarding-doodle">good work starts here ↗</div></main>}

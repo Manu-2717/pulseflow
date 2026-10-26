@@ -1,0 +1,6 @@
+'use client'
+import { useState,useTransition } from 'react'
+import { ArrowRight, Building2 } from 'lucide-react'
+import { createWorkspace } from '@/app/workspace-actions'
+import { useRouter } from 'next/navigation'
+export function WorkspaceSetup(){const router=useRouter();const [pending,startTransition]=useTransition();const [error,setError]=useState('');return <form className="setup-form" action={data=>{startTransition(async()=>{try{const slug=await createWorkspace(String(data.get('name')||''),String(data.get('specialty')||''));router.push(`/w/${slug}`)}catch(e){setError(e instanceof Error?e.message:'Could not create workspace.')}})}}><label>WORKSPACE NAME<span><Building2 size={17}/><input name="name" placeholder="Your team or company" required minLength={2} maxLength={80}/></span></label><label>YOUR SPECIALTY<select name="specialty" defaultValue="General"><option>General</option><option>Frontend</option><option>Backend</option><option>AI/ML</option><option>Systems</option><option>Design</option><option>Product</option></select></label>{error&&<p role="alert" className="auth-error">{error}</p>}<button disabled={pending} type="submit">{pending?'Creating…':'Create workspace'} <ArrowRight size={17}/></button></form>}
