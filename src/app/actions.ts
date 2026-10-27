@@ -38,8 +38,10 @@ export async function cycleTask(taskId:string,autoPull:boolean){
  if(membership.role!=='LEADER'&&task.assigneeId!==user.id)throw new Error('Only the assignee or leader can update this task.')
  const next:TaskStatus=task.status==='DONE'?'QUEUED':task.status==='QUEUED'?'IN_PROGRESS':'DONE'
  if(next==='DONE'&&task.threads.some(t=>t.status==='OPEN'))throw new Error('Resolve open blocker threads before completing this task.')
+ if(next==='IN_PROGRESS'){const pendingDependencies=await prisma.taskDependency.count({where:{taskId,dependsOn:{status:{not:'DONE'}}}});if(pendingDependencies)throw new Error('Complete dependent tasks before starting this task.')}
  await prisma.task.update({where:{id:taskId},data:{status:next,completedAt:next==='DONE'?new Date():null}})
- if(next==='DONE'&&autoPull&&task.assigneeId){const active=await prisma.task.count({where:{workspaceId:task.workspaceId,assigneeId:task.assigneeId,status:{in:['IN_PROGRESS','BLOCKED']}}});if(!active){const queue=await prisma.task.findMany({where:{workspaceId:task.workspaceId,status:'QUEUED',assigneeId:null}});const member=await prisma.user.findUniqueOrThrow({where:{id:task.assigneeId}});queue.sort((a,b)=>rankTask(a,b)||matchScore(b,member.specialty)-matchScore(a,member.specialty));if(queue[0])await prisma.task.updateMany({where:{id:queue[0].id,status:'QUEUED',assigneeId:null},data:{assigneeId:member.id,status:'IN_PROGRESS'}})}}
+ const rule=next==='DONE'?await prisma.automationRule.findUnique({where:{workspaceId_trigger_action:{workspaceId:task.workspaceId,trigger:'TASK_COMPLETED',action:'AUTO_PULL_NEXT'}}}):null
+ if(next==='DONE'&&(autoPull||rule?.enabled)&&task.assigneeId){const active=await prisma.task.count({where:{workspaceId:task.workspaceId,assigneeId:task.assigneeId,status:{in:['IN_PROGRESS','BLOCKED']}}});if(!active){const queue=await prisma.task.findMany({where:{workspaceId:task.workspaceId,status:'QUEUED',assigneeId:null,predecessors:{none:{dependsOn:{status:{not:'DONE'}}}}}});const member=await prisma.user.findUniqueOrThrow({where:{id:task.assigneeId}});queue.sort((a,b)=>rankTask(a,b)||matchScore(b,member.specialty)-matchScore(a,member.specialty));if(queue[0])await prisma.task.updateMany({where:{id:queue[0].id,status:'QUEUED',assigneeId:null},data:{assigneeId:member.id,status:'IN_PROGRESS'}})}}
  refresh()
 }
 export async function dispatchTasks(workspaceId:string){

@@ -25,6 +25,7 @@ model User {
   comments Comment[]
   invitesCreated Invite[]
   aiBriefQuotas AiBriefQuota[]
+  timeEntries TimeEntry[]
   @@map("user")
 }
 
@@ -82,6 +83,55 @@ model Workspace {
   tasks Task[]
   threads IssueThread[]
   invites Invite[]
+  projects Project[]
+  documents WorkspaceDocument[]
+  goals Goal[]
+  automations AutomationRule[]
+}
+
+model Project {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name String
+  color String @default("#57a76a")
+  createdAt DateTime @default(now())
+  tasks Task[]
+  @@index([workspaceId])
+}
+
+model WorkspaceDocument {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title String
+  content String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([workspaceId])
+}
+
+model Goal {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title String
+  target Int
+  current Int @default(0)
+  dueDate DateTime?
+  createdAt DateTime @default(now())
+  @@index([workspaceId])
+}
+
+model AutomationRule {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  enabled Boolean @default(true)
+  trigger String
+  action String
+  createdAt DateTime @default(now())
+  @@unique([workspaceId,trigger,action])
 }
 
 model AiBriefQuota {
@@ -133,11 +183,51 @@ model Task {
   assigneeId String?
   assignee User? @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
   threads IssueThread[]
+  projectId String?
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  startDate DateTime?
+  dueDate DateTime?
+  subtasks Subtask[]
+  timeEntries TimeEntry[]
+  predecessors TaskDependency[] @relation("DependencyTarget")
+  successors TaskDependency[] @relation("DependencySource")
   createdAt DateTime @default(now())
   completedAt DateTime?
   @@unique([workspaceId,code])
   @@index([workspaceId,status])
   @@index([workspaceId,assigneeId])
+}
+
+model Subtask {
+  id String @id @default(cuid())
+  taskId String
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title String
+  done Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([taskId])
+}
+
+model TaskDependency {
+  id String @id @default(cuid())
+  taskId String
+  task Task @relation("DependencyTarget", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnId String
+  dependsOn Task @relation("DependencySource", fields: [dependsOnId], references: [id], onDelete: Cascade)
+  @@unique([taskId,dependsOnId])
+}
+
+model TimeEntry {
+  id String @id @default(cuid())
+  taskId String
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  minutes Int
+  note String @default("")
+  createdAt DateTime @default(now())
+  @@index([taskId,createdAt])
+  @@index([userId,createdAt])
 }
 
 model IssueThread {
