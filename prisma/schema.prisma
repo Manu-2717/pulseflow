@@ -89,6 +89,7 @@ model Workspace {
   automations AutomationRule[]
   sprints Sprint[]
   customFields CustomField[]
+  templates TaskTemplate[]
 }
 
 model Project {
@@ -125,6 +126,18 @@ model CustomField {
   createdAt DateTime @default(now())
   values TaskFieldValue[]
   @@unique([workspaceId,name])
+}
+
+model TaskTemplate {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name String
+  description String @default("")
+  priority String @default("MEDIUM")
+  estimatedPts Int @default(2)
+  createdAt DateTime @default(now())
+  @@index([workspaceId])
 }
 
 model TaskFieldValue {
