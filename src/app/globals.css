@@ -50,8 +50,6 @@ body{background:radial-gradient(#55806220 1px,transparent 1px) 0 0/22px 22px,#f8
 /* Center the paper tape on the panel it decorates. */
 .auth-wrap:before,.auth-wrap:after{display:none}
 .auth-card:before{content:"";position:absolute;z-index:3;top:-18px;left:50%;width:144px;height:35px;background:#f3e394bb;border:1px solid #d9c87988;box-shadow:0 2px 3px #273d1e18;transform:translateX(-50%) rotate(-3deg);pointer-events:none}
-.tape{left:50%;right:auto;top:-7px;transform:translateX(-50%) rotate(-8deg)}
-.tape-two{display:none}
 @media(max-width:600px){.auth-card:before{width:110px;height:29px;top:-15px}}
 
 /* Keep labels in normal flow so copy never sits underneath them. */
@@ -87,8 +85,6 @@ body{background:radial-gradient(#55806220 1px,transparent 1px) 0 0/22px 22px,#f8
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
-/* Keep the decorative tape within the hero's own frame. */
-.public-hero .tape{top:15px}
 .mobile-workspace,.mobile-nav{display:none}
 @media(max-width:900px){
   .topbar .breadcrumbs{display:none}
@@ -145,3 +141,23 @@ body{background:radial-gradient(#55806220 1px,transparent 1px) 0 0/22px 22px,#f8
 @keyframes pf-spin{to{transform:rotate(360deg)}}@keyframes pf-progress{to{transform:translateX(185%)}}
 @media(max-width:600px){.status-header{padding:16px 20px}.status-header>span{font-size:8px;letter-spacing:1px}.status-panel{padding:65px 4px 75px}.status-code span{right:-.28em}.status-actions{align-items:stretch}.status-primary,.status-secondary{width:100%}}
 @media(prefers-reduced-motion:reduce){.loading-mark,.loading-track span{animation:none}}
+
+/* A small product preview gives the hero tape a real surface to hold. */
+.hero-demo{position:absolute;z-index:2;right:5%;bottom:64px;width:min(31vw,410px);padding:20px 20px 14px;border:2px solid #17251c;border-radius:12px;background:#fffdf3;color:#17251c;box-shadow:8px 9px 0 #14251a;transform:rotate(2deg)}
+.hero-demo .tape{position:absolute;z-index:3;top:-19px;left:50%;right:auto;width:132px;height:34px;opacity:.86;background:#f3e197;border:1px solid #d0bd77;box-shadow:0 2px 2px #17251c22;transform:translateX(-50%) rotate(-5deg);pointer-events:none}
+.hero-demo-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:2px 0 13px;border-bottom:1px solid #b9cfb8;font-size:10px;font-weight:950;letter-spacing:1.3px}
+.hero-demo-top>span:first-child{display:flex;align-items:center;gap:7px;white-space:nowrap}.hero-demo-spark{font-size:19px;line-height:0;color:#398c53}
+.hero-demo-live{display:flex;align-items:center;gap:6px;color:#347548;font-size:9px;letter-spacing:.7px;white-space:nowrap}.hero-demo-live i{width:7px;height:7px;border-radius:50%;background:#65bf82;box-shadow:0 0 0 4px #65bf8226}
+.hero-demo-members{padding:10px 0}.hero-demo-person{display:flex;align-items:center;gap:9px;padding:8px 0}.hero-demo-person+ .hero-demo-person{border-top:1px dashed #d6e1d1}
+.hero-demo-avatar{flex:none;display:grid;place-items:center;width:31px;height:31px;border:1px solid #213a29;border-radius:50%;font-size:10px;font-weight:900}.hero-demo-avatar.mint{background:#b1e4bd}.hero-demo-avatar.pink{background:#f5cadb}
+.hero-demo-person>span:nth-child(2){display:grid;min-width:0;gap:2px}.hero-demo-person strong{font-size:12px;line-height:1.1;white-space:nowrap}.hero-demo-person small{font-size:10px;color:#627462}
+.hero-demo-person b{margin-left:auto;flex:none;border-radius:40px;padding:5px 8px;font-size:9px;line-height:1;letter-spacing:.3px}.hero-demo-free{background:#d3f1d8;color:#206139}.hero-demo-active{background:#fff0cc;color:#815c19}
+.hero-demo-route{display:grid;gap:6px;border:1px solid #7baf88;border-radius:8px;background:#e9f8e8;padding:13px 14px;box-shadow:3px 3px 0 #aed8b1}.hero-demo-route>span{font-size:9px;font-weight:850;letter-spacing:1px;color:#3d6847}.hero-demo-route>span b{margin-left:5px;color:#245a33}.hero-demo-route>strong{font-size:16px;line-height:1.2;letter-spacing:-.4px}.hero-demo-route>div{display:flex;justify-content:space-between;align-items:center;color:#2d6a3e;font-size:11px;font-weight:800}
+.hero-demo-foot{display:flex;align-items:center;gap:7px;margin-top:14px;color:#527459;font-family:Georgia,serif;font-size:12px;font-style:italic}.hero-demo-foot svg{flex:none;color:#418958}
+.public-hero .sticker-star{top:130px}
+.hero-handoff{position:absolute;right:36%;bottom:81px;display:flex;align-items:center;gap:7px;color:#426a49;font-family:"Bradley Hand","Marker Felt",cursive;font-size:17px;transform:rotate(-8deg);white-space:nowrap}.hero-handoff svg{transform:rotate(-12deg);stroke-width:1.7}
+@media(max-width:1100px){.hero-demo{right:3%;width:310px;bottom:38px}.hero-demo-route>strong{font-size:15px}.public-hero .sticker-note{display:none}}
+@media(max-width:850px){.public-hero{min-height:0;padding-bottom:64px}.hero-demo{position:relative;right:auto;bottom:auto;width:min(100%,430px);margin:66px auto 0;transform:rotate(1deg)}.hero-demo .tape{top:-19px}.sticker-star,.sticker-note,.hero-squiggle,.hero-handoff{display:none}}
+@media(max-width:600px){.public-hero{min-height:0;padding-bottom:56px}.hero-demo{width:calc(100% - 12px);margin-top:68px;padding:17px 16px 13px;box-shadow:6px 7px 0 #14251a}.hero-demo .tape{width:112px;height:30px;top:-16px}.hero-demo-top{font-size:9px}.hero-demo-live{font-size:8px}.hero-demo-route{padding:12px}}
+@media(max-width:380px){.public-nav{gap:8px;padding-inline:9px}.nav-signin{gap:7px;padding:5px 5px 5px 10px;white-space:nowrap;font-size:11px}.nav-signin svg{width:25px;height:25px}}
+@media(prefers-reduced-motion:no-preference){.hero-demo{transition:transform .3s ease,box-shadow .3s ease}.hero-demo:hover{transform:rotate(0);box-shadow:10px 11px 0 #14251a}}
