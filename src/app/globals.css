@@ -161,3 +161,23 @@ body{background:radial-gradient(#55806220 1px,transparent 1px) 0 0/22px 22px,#f8
 @media(max-width:600px){.public-hero{min-height:0;padding-bottom:56px}.hero-demo{width:calc(100% - 12px);margin-top:68px;padding:17px 16px 13px;box-shadow:6px 7px 0 #14251a}.hero-demo .tape{width:112px;height:30px;top:-16px}.hero-demo-top{font-size:9px}.hero-demo-live{font-size:8px}.hero-demo-route{padding:12px}}
 @media(max-width:380px){.public-nav{gap:8px;padding-inline:9px}.nav-signin{gap:7px;padding:5px 5px 5px 10px;white-space:nowrap;font-size:11px}.nav-signin svg{width:25px;height:25px}}
 @media(prefers-reduced-motion:no-preference){.hero-demo{transition:transform .3s ease,box-shadow .3s ease}.hero-demo:hover{transform:rotate(0);box-shadow:10px 11px 0 #14251a}}
+
+/* One-time landing reveals. Without JavaScript, every section stays readable. */
+@keyframes pf-desk-enter{from{opacity:0;translate:0 18px}to{opacity:1;translate:0 0}}
+@media(prefers-reduced-motion:no-preference){
+  .public-nav{animation:pf-rise .5s both cubic-bezier(.2,.8,.2,1)}
+  .hero-demo{animation:pf-desk-enter .7s .28s both cubic-bezier(.2,.8,.2,1)}
+  .hero-handoff{animation:pf-desk-enter .65s .5s both cubic-bezier(.2,.8,.2,1)}
+  .public-page.motion-ready [data-reveal]{opacity:0;translate:0 16px;transition:opacity .65s cubic-bezier(.2,.8,.2,1) var(--reveal-delay,0s),translate .65s cubic-bezier(.2,.8,.2,1) var(--reveal-delay,0s),transform .25s ease,box-shadow .25s ease}
+  .public-page.motion-ready [data-reveal].is-visible{opacity:1;translate:0 0}
+  .workflow-grid article:nth-child(2){--reveal-delay:.07s}
+  .workflow-grid article:nth-child(3){--reveal-delay:.14s}
+  .public-why>div[data-reveal]:nth-child(2){--reveal-delay:.09s}
+}
+
+.chapter-head h2,.public-why h2,.public-final h2{letter-spacing:-.035em;word-spacing:.05em}
+.marquee-strip{display:block;overflow:hidden;padding:0}
+.marquee-track{display:flex;width:max-content}
+.marquee-set{display:flex;align-items:center;flex:none;gap:clamp(34px,5vw,84px);padding:14px clamp(34px,5vw,84px) 14px 0;white-space:nowrap}
+@keyframes pf-marquee{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:no-preference){.marquee-track{animation:pf-marquee 38s linear infinite}.marquee-strip:hover .marquee-track{animation-play-state:paused}}
