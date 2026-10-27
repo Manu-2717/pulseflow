@@ -24,5 +24,5 @@ export default async function PlanningPage({params}:{params:Promise<{slug:string
   prisma.customField.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'asc'}}),
   prisma.taskTemplate.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'desc'}})
  ])
- return <Planner workspace={{id:workspace.id,name:workspace.name,slug}} role={membership.role} tasks={JSON.parse(JSON.stringify(tasks))} projects={JSON.parse(JSON.stringify(projects))} documents={JSON.parse(JSON.stringify(documents))} goals={JSON.parse(JSON.stringify(goals))} sprints={JSON.parse(JSON.stringify(sprints))} customFields={JSON.parse(JSON.stringify(customFields))} templates={JSON.parse(JSON.stringify(templates))} automationEnabled={automation?.enabled??false}/>
+ return <Planner workspace={{id:workspace.id,name:workspace.name,slug}} role={membership.role} asOf={new Date().toISOString()} tasks={JSON.parse(JSON.stringify(tasks))} projects={JSON.parse(JSON.stringify(projects))} documents={JSON.parse(JSON.stringify(documents))} goals={JSON.parse(JSON.stringify(goals))} sprints={JSON.parse(JSON.stringify(sprints))} customFields={JSON.parse(JSON.stringify(customFields))} templates={JSON.parse(JSON.stringify(templates))} automationEnabled={automation?.enabled??false}/>
 }
