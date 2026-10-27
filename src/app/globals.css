@@ -191,3 +191,4 @@ body{background:radial-gradient(#55806220 1px,transparent 1px) 0 0/22px 22px,#f8
 .social-button .google-g{margin-right:0}
 .apple-mark{font-size:19px;line-height:1}
 @media(prefers-reduced-motion:reduce){.social-button{transition:none}.social-button:hover{transform:none}}
+.planner-reminder{width:100%;border:0;border-bottom:1px solid #d7e5d8;background:transparent;display:flex;justify-content:space-between;gap:10px;padding:9px 0;text-align:left;color:#294b30;cursor:pointer}.planner-reminder:hover{color:#147636}.planner-reminder strong{white-space:nowrap}
