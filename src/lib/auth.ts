@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { prisma } from './prisma'
-import { emailEnabled, sendAuthEmail } from './email'
+import { emailEnabled, passwordEnabled, sendAuthEmail } from './email'
 import { importPKCS8, SignJWT } from 'jose'
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
@@ -30,7 +30,7 @@ export const auth = betterAuth({
   ],
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
   emailAndPassword: {
-    enabled: true,
+    enabled: passwordEnabled,
     minPasswordLength: 10,
     requireEmailVerification: emailEnabled,
     sendResetPassword: emailEnabled ? async ({ user, url }) => sendAuthEmail(user.email, 'Reset your PulseFlow password', url) : undefined,

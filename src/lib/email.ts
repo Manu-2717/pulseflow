@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer'
 
 export const emailEnabled = Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM)
+// Public password accounts must prove ownership of their email address.
+export const passwordEnabled = process.env.NODE_ENV !== 'production' || emailEnabled
 
 export async function sendAuthEmail(to: string, subject: string, actionUrl: string) {
   if (!emailEnabled) throw new Error('Email delivery is not configured.')
