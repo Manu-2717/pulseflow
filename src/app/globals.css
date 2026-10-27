@@ -181,3 +181,12 @@ body{background:radial-gradient(#55806220 1px,transparent 1px) 0 0/22px 22px,#f8
 .marquee-set{display:flex;align-items:center;flex:none;gap:clamp(34px,5vw,84px);padding:14px clamp(34px,5vw,84px) 14px 0;white-space:nowrap}
 @keyframes pf-marquee{to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:no-preference){.marquee-track{animation:pf-marquee 38s linear infinite}.marquee-strip:hover .marquee-track{animation-play-state:paused}}
+
+.social-buttons{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px}
+.social-button{min-height:45px;border:2px solid #1e2c20;background:#fffdf4;color:#1c291e;border-radius:8px;font-size:13px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:transform .2s ease,background .2s ease}
+.social-button:hover{background:#e9f8e8;transform:translateY(-2px)}
+.social-button:disabled{opacity:.6;cursor:wait}
+.social-button:focus-visible{outline:3px solid #45ae70;outline-offset:2px}
+.social-button .google-g{margin-right:0}
+.apple-mark{font-size:19px;line-height:1}
+@media(prefers-reduced-motion:reduce){.social-button{transition:none}.social-button:hover{transform:none}}

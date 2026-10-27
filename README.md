@@ -4,7 +4,7 @@ PulseFlow is a self-hosted team task board with live capacity, smart dispatch, a
 
 ## What works
 
-- Email/password accounts, optional Google OAuth, and SMTP-backed verification and password recovery.
+- Email/password accounts, optional Google, GitHub, and Apple OAuth, and SMTP-backed verification and password recovery.
 - Multiple workspaces, member invitations, role-based task actions, and workspace-scoped data.
 - Tasks with priorities, estimates, assignees, live workload cards, optimistic status updates, and smart dispatch.
 - Per-task blocker threads, comments with code snippets, accepted solutions, and AI briefs. Briefs use OpenAI when configured and a local deterministic analyzer otherwise.
@@ -32,7 +32,7 @@ Use a URL-safe `POSTGRES_PASSWORD` if you use the Compose file as written, since
 
 Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM` for email verification and password reset. When SMTP is configured, new email/password accounts must verify their address before signing in. Without SMTP, local testing can use email/password accounts, but password recovery and email ownership verification are unavailable. Configure SMTP for public rollout.
 
-To enable Google login, create OAuth credentials in Google Cloud, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and authorize `https://YOUR_DOMAIN/api/auth/callback/google`. The Google button appears only when both variables are present. Set `OPENAI_API_KEY` only if you want model-generated blocker briefs.
+To enable Google login, create OAuth credentials in Google Cloud, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and authorize `https://YOUR_DOMAIN/api/auth/callback/google`. The Google button appears only when both variables are present. GitHub OAuth uses `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` with callback `https://YOUR_DOMAIN/api/auth/callback/github`; creating an OAuth App is free. Apple sign-in uses `APPLE_CLIENT_ID` (Service ID), `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY` (the `.p8` key), with callback `https://YOUR_DOMAIN/api/auth/callback/apple`. Apple requires an active paid Apple Developer Program membership and an HTTPS domain, so its button appears only after you provide those credentials. Set `OPENAI_API_KEY` only if you want model-generated blocker briefs.
 
 ## Security and operations
 
