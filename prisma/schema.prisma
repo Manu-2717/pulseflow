@@ -140,6 +140,20 @@ model TaskTemplate {
   @@index([workspaceId])
 }
 
+model TaskExternalLink {
+  id String @id @default(cuid())
+  taskId String
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  provider String
+  url String
+  title String
+  state String?
+  checkedAt DateTime?
+  createdAt DateTime @default(now())
+  @@unique([taskId,url])
+  @@index([taskId])
+}
+
 model TaskFieldValue {
   id String @id @default(cuid())
   taskId String
@@ -247,6 +261,7 @@ model Task {
   fieldValues TaskFieldValue[]
   recurrence String?
   recurrenceSourceId String? @unique
+  externalLinks TaskExternalLink[]
   createdAt DateTime @default(now())
   completedAt DateTime?
   @@unique([workspaceId,code])

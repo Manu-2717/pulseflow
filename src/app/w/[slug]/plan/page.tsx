@@ -15,7 +15,7 @@ export default async function PlanningPage({params}:{params:Promise<{slug:string
  const membership=await prisma.membership.findUnique({where:{workspaceId_userId:{workspaceId:workspace.id,userId:user.id}}})
  if(!membership)notFound()
  const [tasks,projects,documents,goals,automation,sprints,customFields,templates]=await Promise.all([
-  prisma.task.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'desc'},include:{assignee:{select:{name:true}},project:true,subtasks:{orderBy:{createdAt:'asc'}},predecessors:{include:{dependsOn:{select:{id:true,code:true,title:true,status:true}}}},timeEntries:{include:{user:{select:{name:true}}},orderBy:{createdAt:'desc'}},fieldValues:true}}),
+  prisma.task.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'desc'},include:{assignee:{select:{name:true}},project:true,subtasks:{orderBy:{createdAt:'asc'}},predecessors:{include:{dependsOn:{select:{id:true,code:true,title:true,status:true}}}},timeEntries:{include:{user:{select:{name:true}}},orderBy:{createdAt:'desc'}},fieldValues:true,externalLinks:true}}),
   prisma.project.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'asc'}}),
   prisma.workspaceDocument.findMany({where:{workspaceId:workspace.id},orderBy:{updatedAt:'desc'}}),
   prisma.goal.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'desc'}}),

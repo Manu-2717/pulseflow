@@ -61,3 +61,21 @@ export async function setCustomFieldValue(taskId:string,fieldId:string,value:str
 export async function setTaskRecurrence(taskId:string,recurrence:string|null){const {task}=await taskContext(taskId);await requireLeader(task.workspaceId);if(recurrence&&!['DAILY','WEEKLY','MONTHLY'].includes(recurrence))throw new Error('Choose a valid repeat interval.');await prisma.task.update({where:{id:taskId},data:{recurrence}});refresh()}
 export async function saveTaskTemplate(taskId:string,name:string){const {task}=await taskContext(taskId);await requireLeader(task.workspaceId);await prisma.taskTemplate.create({data:{workspaceId:task.workspaceId,name:title(name),description:task.description,priority:task.priority,estimatedPts:task.estimatedPts}});refresh()}
 export async function createFromTemplate(templateId:string){const template=await prisma.taskTemplate.findUniqueOrThrow({where:{id:templateId}});await requireMembership(template.workspaceId);const result=await prisma.$transaction(async tx=>{const workspace=await tx.workspace.update({where:{id:template.workspaceId},data:{nextTaskNumber:{increment:1}},select:{nextTaskNumber:true}});const n=workspace.nextTaskNumber-1;return tx.task.create({data:{workspaceId:template.workspaceId,code:`TSK-${String(n).padStart(2,'0')}`,title:template.name,description:template.description,priority:template.priority,estimatedPts:template.estimatedPts,status:'QUEUED'}})});refresh();return result.code}
+
+async function publicPullRequest(url:URL){const match=url.pathname.match(/^\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/pull\/(\d+)\/?$/);if(!match)throw new Error('Use a GitHub pull request URL.');const response=await fetch(`https://api.github.com/repos/${match[1]}/${match[2]}/pulls/${match[3]}`,{headers:{Accept:'application/vnd.github+json','User-Agent':'PulseFlow'},signal:AbortSignal.timeout(6000),cache:'no-store'});if(!response.ok)throw new Error('Could not read this public GitHub pull request.');const data=await response.json();if(typeof data.title!=='string'||typeof data.state!=='string')throw new Error('Unexpected GitHub response.');return {title:data.title.slice(0,200),state:data.merged_at?'MERGED':data.state.toUpperCase()}}
+export async function addExternalLink(taskId:string,rawUrl:string){
+ const {task}=await taskContext(taskId)
+ if(rawUrl.length>2048)throw new Error('Link is too long.')
+ let url:URL;try{url=new URL(rawUrl.trim())}catch{throw new Error('Enter a valid link.')}
+ if(url.protocol!=='https:'||url.username||url.password)throw new Error('Use a secure web link.')
+ const host=url.hostname.toLowerCase();url.search='';url.hash=''
+ let provider:string,title:string,state:string|null=null
+ if(host==='github.com'){provider='GITHUB_PR';const pr=await publicPullRequest(url);title=pr.title;state=pr.state}
+ else if(host==='drive.google.com'&&/^\/file\/d\/[A-Za-z0-9_-]+/.test(url.pathname)){provider='GOOGLE_DRIVE';title='Google Drive file'}
+ else if(host==='docs.google.com'&&/^\/(document|spreadsheets|presentation)\/d\/[A-Za-z0-9_-]+/.test(url.pathname)){provider='GOOGLE_DRIVE';title='Google document'}
+ else throw new Error('Use a public GitHub pull request or a Google Drive document link.')
+ await prisma.taskExternalLink.upsert({where:{taskId_url:{taskId,url:url.toString()}},create:{taskId,provider,url:url.toString(),title,state,checkedAt:provider==='GITHUB_PR'?new Date():null},update:{title,state,checkedAt:provider==='GITHUB_PR'?new Date():null}})
+ refresh()
+}
+export async function refreshExternalLink(linkId:string){const link=await prisma.taskExternalLink.findUniqueOrThrow({where:{id:linkId},include:{task:true}});await requireMembership(link.task.workspaceId);if(link.provider!=='GITHUB_PR')return;const pr=await publicPullRequest(new URL(link.url));await prisma.taskExternalLink.update({where:{id:linkId},data:{title:pr.title,state:pr.state,checkedAt:new Date()}});refresh()}
+export async function removeExternalLink(linkId:string){const link=await prisma.taskExternalLink.findUniqueOrThrow({where:{id:linkId},include:{task:true}});await requireMembership(link.task.workspaceId);await prisma.taskExternalLink.delete({where:{id:linkId}});refresh()}

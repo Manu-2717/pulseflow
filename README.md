@@ -24,6 +24,8 @@ For production, use `npm run build` followed by `npm run start`. The build appli
 
 The Planning suite at `/w/[slug]/plan` adds workspace projects, task list and board views, upcoming dates, a timeline and Gantt schedule, weekly timesheets, sprints, custom fields, recurring tasks, reusable task templates, subtasks, dependencies, time logs, shared documents, measurable goals, reporting, and an optional auto-pull automation. Leaders manage projects, schedules, sprints, field definitions, recurrence, templates, dependencies, goals, and automation; workspace members can create tasks from templates and contribute field values, subtasks, time logs, and documents.
 
+Tasks can link public GitHub pull requests (with manually refreshed status) and Google Drive documents. Scheduled tasks offer an explicit Add to Google Calendar link. These links do not grant PulseFlow private repository or Google account access; private content remains governed by the linked provider's own sharing permissions.
+
 ## Portable Docker deployment
 
 The included `Dockerfile` and `docker-compose.yml` run Next.js and PostgreSQL together. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `BETTER_AUTH_URL` and `SITE_URL` to your public HTTPS origin, and `BETTER_AUTH_SECRET`. `SITE_URL` supplies the canonical URL and sitemap address. Set the SMTP variables below before inviting real people. Then run `docker compose up --build -d`. A separate one-shot migration container applies migrations before the unprivileged web container starts. Put an HTTPS reverse proxy on the same host in front of port 3000 and back up the named PostgreSQL volume. `/api/health` checks database connectivity.
