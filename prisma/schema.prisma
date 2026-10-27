@@ -87,6 +87,8 @@ model Workspace {
   documents WorkspaceDocument[]
   goals Goal[]
   automations AutomationRule[]
+  sprints Sprint[]
+  customFields CustomField[]
 }
 
 model Project {
@@ -98,6 +100,42 @@ model Project {
   createdAt DateTime @default(now())
   tasks Task[]
   @@index([workspaceId])
+}
+
+model Sprint {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name String
+  startDate DateTime
+  endDate DateTime
+  goal String @default("")
+  createdAt DateTime @default(now())
+  tasks Task[]
+  @@index([workspaceId,startDate])
+}
+
+model CustomField {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name String
+  type String
+  options Json?
+  createdAt DateTime @default(now())
+  values TaskFieldValue[]
+  @@unique([workspaceId,name])
+}
+
+model TaskFieldValue {
+  id String @id @default(cuid())
+  taskId String
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fieldId String
+  field CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value String
+  @@unique([taskId,fieldId])
+  @@index([fieldId])
 }
 
 model WorkspaceDocument {
@@ -191,6 +229,9 @@ model Task {
   timeEntries TimeEntry[]
   predecessors TaskDependency[] @relation("DependencyTarget")
   successors TaskDependency[] @relation("DependencySource")
+  sprintId String?
+  sprint Sprint? @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  fieldValues TaskFieldValue[]
   createdAt DateTime @default(now())
   completedAt DateTime?
   @@unique([workspaceId,code])

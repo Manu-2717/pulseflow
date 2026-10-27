@@ -28,3 +28,33 @@ export async function saveDocument(documentId:string,name:string,content:string)
 export async function createGoal(workspaceId:string,name:string,target:number,dueDate:string|null){await requireLeader(workspaceId);if(!Number.isInteger(target)||target<1||target>1000000)throw new Error('Target must be a positive number.');await prisma.goal.create({data:{workspaceId,title:title(name),target,dueDate:date(dueDate)}});refresh()}
 export async function updateGoal(goalId:string,current:number){const goal=await prisma.goal.findUniqueOrThrow({where:{id:goalId}});await requireLeader(goal.workspaceId);if(!Number.isInteger(current)||current<0||current>1000000)throw new Error('Progress must be a nonnegative number.');await prisma.goal.update({where:{id:goalId},data:{current}});refresh()}
 export async function setAutomation(workspaceId:string,enabled:boolean){await requireLeader(workspaceId);await prisma.automationRule.upsert({where:{workspaceId_trigger_action:{workspaceId,trigger:'TASK_COMPLETED',action:'AUTO_PULL_NEXT'}},create:{workspaceId,trigger:'TASK_COMPLETED',action:'AUTO_PULL_NEXT',enabled},update:{enabled}});refresh()}
+
+export async function createSprint(workspaceId:string,input:{name:string;goal:string;startDate:string;endDate:string}){
+ await requireLeader(workspaceId)
+ const start=date(input.startDate),end=date(input.endDate)
+ if(!start||!end||end<start)throw new Error('Sprint dates must be in order.')
+ if(input.goal.length>500)throw new Error('Sprint goal is too long.')
+ await prisma.sprint.create({data:{workspaceId,name:title(input.name),goal:input.goal.trim(),startDate:start,endDate:end}});refresh()
+}
+export async function assignSprint(taskId:string,sprintId:string|null){const {task}=await taskContext(taskId);await requireLeader(task.workspaceId);if(sprintId){const sprint=await prisma.sprint.findFirst({where:{id:sprintId,workspaceId:task.workspaceId}});if(!sprint)throw new Error('Sprint is not in this workspace.')}await prisma.task.update({where:{id:taskId},data:{sprintId}});refresh()}
+export async function createCustomField(workspaceId:string,input:{name:string;type:string;options?:string}){
+ await requireLeader(workspaceId)
+ const type=input.type
+ if(!['TEXT','NUMBER','DATE','SELECT'].includes(type))throw new Error('Unsupported field type.')
+ const options=type==='SELECT'?[...new Set((input.options??'').split(',').map(v=>v.trim()).filter(Boolean))]:[]
+ if(type==='SELECT'&&(options.length<2||options.length>30||options.some(v=>v.length>80)))throw new Error('Add 2–30 short dropdown choices.')
+ await prisma.customField.create({data:{workspaceId,name:title(input.name),type,options:type==='SELECT'?options:undefined}});refresh()
+}
+export async function setCustomFieldValue(taskId:string,fieldId:string,value:string){
+ const {task}=await taskContext(taskId)
+ const field=await prisma.customField.findFirst({where:{id:fieldId,workspaceId:task.workspaceId}})
+ if(!field)throw new Error('Field is not in this workspace.')
+ const clean=value.trim()
+ if(clean.length>500)throw new Error('Value is too long.')
+ if(field.type==='NUMBER'&&clean!==''&&!Number.isFinite(Number(clean)))throw new Error('Enter a valid number.')
+ if(field.type==='DATE'&&clean!==''&&!date(clean))throw new Error('Enter a valid date.')
+ if(field.type==='SELECT'&&clean!==''&&!(Array.isArray(field.options)&&field.options.includes(clean)))throw new Error('Choose an allowed option.')
+ if(clean)await prisma.taskFieldValue.upsert({where:{taskId_fieldId:{taskId,fieldId}},create:{taskId,fieldId,value:clean},update:{value:clean}})
+ else await prisma.taskFieldValue.deleteMany({where:{taskId,fieldId}})
+ refresh()
+}

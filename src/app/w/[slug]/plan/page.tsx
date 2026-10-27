@@ -14,12 +14,14 @@ export default async function PlanningPage({params}:{params:Promise<{slug:string
  if(!workspace)notFound()
  const membership=await prisma.membership.findUnique({where:{workspaceId_userId:{workspaceId:workspace.id,userId:user.id}}})
  if(!membership)notFound()
- const [tasks,projects,documents,goals,automation]=await Promise.all([
-  prisma.task.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'desc'},include:{assignee:{select:{name:true}},project:true,subtasks:{orderBy:{createdAt:'asc'}},predecessors:{include:{dependsOn:{select:{id:true,code:true,title:true,status:true}}}},timeEntries:{include:{user:{select:{name:true}}},orderBy:{createdAt:'desc'}}}}),
+ const [tasks,projects,documents,goals,automation,sprints,customFields]=await Promise.all([
+  prisma.task.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'desc'},include:{assignee:{select:{name:true}},project:true,subtasks:{orderBy:{createdAt:'asc'}},predecessors:{include:{dependsOn:{select:{id:true,code:true,title:true,status:true}}}},timeEntries:{include:{user:{select:{name:true}}},orderBy:{createdAt:'desc'}},fieldValues:true}}),
   prisma.project.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'asc'}}),
   prisma.workspaceDocument.findMany({where:{workspaceId:workspace.id},orderBy:{updatedAt:'desc'}}),
   prisma.goal.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'desc'}}),
-  prisma.automationRule.findUnique({where:{workspaceId_trigger_action:{workspaceId:workspace.id,trigger:'TASK_COMPLETED',action:'AUTO_PULL_NEXT'}}})
+  prisma.automationRule.findUnique({where:{workspaceId_trigger_action:{workspaceId:workspace.id,trigger:'TASK_COMPLETED',action:'AUTO_PULL_NEXT'}}}),
+  prisma.sprint.findMany({where:{workspaceId:workspace.id},orderBy:{startDate:'desc'}}),
+  prisma.customField.findMany({where:{workspaceId:workspace.id},orderBy:{createdAt:'asc'}})
  ])
- return <Planner workspace={{id:workspace.id,name:workspace.name,slug}} role={membership.role} tasks={JSON.parse(JSON.stringify(tasks))} projects={JSON.parse(JSON.stringify(projects))} documents={JSON.parse(JSON.stringify(documents))} goals={JSON.parse(JSON.stringify(goals))} automationEnabled={automation?.enabled??false}/>
+ return <Planner workspace={{id:workspace.id,name:workspace.name,slug}} role={membership.role} tasks={JSON.parse(JSON.stringify(tasks))} projects={JSON.parse(JSON.stringify(projects))} documents={JSON.parse(JSON.stringify(documents))} goals={JSON.parse(JSON.stringify(goals))} sprints={JSON.parse(JSON.stringify(sprints))} customFields={JSON.parse(JSON.stringify(customFields))} automationEnabled={automation?.enabled??false}/>
 }
