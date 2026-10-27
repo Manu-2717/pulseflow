@@ -1,3 +1,4 @@
+export const metadata = { title: 'Choose a new password', robots: { index: false, follow: false } }
 import { notFound } from 'next/navigation'
 import { PasswordRecovery } from '@/components/password-recovery'
 import { emailEnabled } from '@/lib/email'

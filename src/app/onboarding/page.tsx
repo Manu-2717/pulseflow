@@ -1,3 +1,4 @@
+export const metadata = { title: 'Set up your workspace', robots: { index: false, follow: false } }
 import { requireUser } from '@/lib/access'
 import { prisma } from '@/lib/prisma'
 import { WorkspaceSetup } from '@/components/workspace-setup'

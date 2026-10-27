@@ -1,3 +1,4 @@
+export const metadata = { title: 'Create your PulseFlow account', robots: { index: false, follow: false } }
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/access'
 import { safeNextPath } from '@/lib/redirect-path'

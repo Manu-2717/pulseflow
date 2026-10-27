@@ -24,7 +24,7 @@ For production, use `npm run build` followed by `npm run start`. Run `npx prisma
 
 ## Portable Docker deployment
 
-The included `Dockerfile` and `docker-compose.yml` run Next.js and PostgreSQL together. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `BETTER_AUTH_URL` to your public HTTPS origin, and `BETTER_AUTH_SECRET`. Set the SMTP variables below before inviting real people. Then run `docker compose up --build -d`. The web container applies migrations on startup. Put an HTTPS reverse proxy in front of port 3000 and back up the named PostgreSQL volume. `/api/health` checks database connectivity.
+The included `Dockerfile` and `docker-compose.yml` run Next.js and PostgreSQL together. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `BETTER_AUTH_URL` and `SITE_URL` to your public HTTPS origin, and `BETTER_AUTH_SECRET`. `SITE_URL` supplies the canonical URL and sitemap address. Set the SMTP variables below before inviting real people. Then run `docker compose up --build -d`. The web container applies migrations on startup. Put an HTTPS reverse proxy in front of port 3000 and back up the named PostgreSQL volume. `/api/health` checks database connectivity.
 
 Use a URL-safe `POSTGRES_PASSWORD` if you use the Compose file as written, since it is interpolated into a database URL. Do not commit `.env`.
 

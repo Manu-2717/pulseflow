@@ -1,3 +1,4 @@
+export const metadata = { title: 'Your PulseFlow workspace', robots: { index: false, follow: false } }
 import { redirect,notFound } from 'next/navigation'
 import { currentUser } from '@/lib/access'
 import { prisma } from '@/lib/prisma'

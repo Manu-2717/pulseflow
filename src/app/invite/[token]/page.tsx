@@ -1,3 +1,4 @@
+export const metadata = { title: 'Join a PulseFlow workspace', robots: { index: false, follow: false } }
 import Link from 'next/link'
 import { createHash } from 'node:crypto'
 import { currentUser } from '@/lib/access'
