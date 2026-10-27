@@ -22,7 +22,7 @@ Requires Node.js 22+ and PostgreSQL 16+.
 
 For production, use `npm run build` followed by `npm run start`. The build applies pending Prisma migrations before compiling, including on Vercel. The database starts empty; each team creates its own workspace and tasks.
 
-The Planning suite at `/w/[slug]/plan` adds workspace projects, task list and board views, upcoming dates, a timeline, sprints, custom fields, subtasks, dependencies, time logs, shared documents, measurable goals, reporting, and an optional auto-pull automation. Leaders manage projects, schedules, sprints, field definitions, dependencies, goals, and automation; workspace members can contribute field values, subtasks, time logs, and documents.
+The Planning suite at `/w/[slug]/plan` adds workspace projects, task list and board views, upcoming dates, a timeline, sprints, custom fields, recurring tasks, subtasks, dependencies, time logs, shared documents, measurable goals, reporting, and an optional auto-pull automation. Leaders manage projects, schedules, sprints, field definitions, recurrence, dependencies, goals, and automation; workspace members can contribute field values, subtasks, time logs, and documents.
 
 ## Portable Docker deployment
 

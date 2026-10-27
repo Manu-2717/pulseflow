@@ -58,3 +58,4 @@ export async function setCustomFieldValue(taskId:string,fieldId:string,value:str
  else await prisma.taskFieldValue.deleteMany({where:{taskId,fieldId}})
  refresh()
 }
+export async function setTaskRecurrence(taskId:string,recurrence:string|null){const {task}=await taskContext(taskId);await requireLeader(task.workspaceId);if(recurrence&&!['DAILY','WEEKLY','MONTHLY'].includes(recurrence))throw new Error('Choose a valid repeat interval.');await prisma.task.update({where:{id:taskId},data:{recurrence}});refresh()}

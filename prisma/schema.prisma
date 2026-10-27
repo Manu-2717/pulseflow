@@ -232,6 +232,8 @@ model Task {
   sprintId String?
   sprint Sprint? @relation(fields: [sprintId], references: [id], onDelete: SetNull)
   fieldValues TaskFieldValue[]
+  recurrence String?
+  recurrenceSourceId String? @unique
   createdAt DateTime @default(now())
   completedAt DateTime?
   @@unique([workspaceId,code])
