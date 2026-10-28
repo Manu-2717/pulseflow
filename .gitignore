@@ -4,6 +4,8 @@ node_modules
 .env
 work/
 outputs/
+backups/
+*.agekey
 prisma/*.db
 prisma/*.db-journal
 tsconfig.tsbuildinfo

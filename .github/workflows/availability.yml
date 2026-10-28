@@ -1,0 +1,26 @@
+name: Production availability
+
+on:
+  schedule:
+    - cron: '11 * * * *'
+    - cron: '26,41,56 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-availability
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check public pages and database readiness
+        env:
+          MONITOR_ORIGIN: https://pulseflow-theta.vercel.app
+          CHECK_DATABASE: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '11 * * * *' }}
+        run: node scripts/check-availability.mjs

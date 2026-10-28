@@ -41,3 +41,7 @@ To enable Google login, create OAuth credentials in Google Cloud, set `GOOGLE_CL
 ## Security and operations
 
 Sessions and password hashes are managed by Better Auth. Server actions check current membership and leader permissions before reading or changing workspace records; invite tokens are stored as hashes and expire after seven days or ten uses. Deploy behind HTTPS, keep all secrets in your hosting secret manager, configure backups, and monitor the health endpoint. The included Docker Compose setup is a portable starting point. Its web port binds to loopback for a same-host HTTPS proxy. AI-generated briefs are limited to ten paid requests per member per hour, one generation per thread per minute, bounded prompt size, and a 12-second provider timeout. Choose your host, domain, SMTP provider, and OAuth credentials before making the service public.
+
+## Operations and project access
+
+See [the operations runbook](docs/operations.md) for availability checks, error logs, encrypted backups and recovery, and search-engine setup. See [project access](docs/project-access-plan.md) for roles, migration rollout, and authorization checks.

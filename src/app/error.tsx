@@ -1,9 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect } from 'react'
+import { reportClientError } from '@/lib/client-error'
 import { ArrowUpRight, RotateCcw, TriangleAlert } from 'lucide-react'
 
-export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(()=>reportClientError('boundary',error.digest),[error.digest])
   return <main className="status-page">
     <header className="status-header"><Link href="/" className="status-logo"><span>⌁</span> pulseflow</Link><span>TEAM OS / 001</span></header>
     <section className="status-panel" aria-labelledby="error-title" role="alert">

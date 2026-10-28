@@ -1,0 +1,41 @@
+name: Encrypted database backup
+
+on:
+  schedule:
+    - cron: '37 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: vars.DATABASE_BACKUPS_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Verify backup connection is configured
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: test -n "$BACKUP_DATABASE_URL" || { echo 'Configure the backup database secret before enabling scheduled backups.'; exit 1; }
+      - name: Install encryption tool
+        run: sudo apt-get update -qq && sudo apt-get install -y age
+      - name: Export and encrypt without writing plaintext
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PG_DUMP_CONTAINER: postgres:18
+        run: node scripts/backup-database.mjs
+      - name: Retain only encrypted backup files for seven days
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: encrypted-database-${{ github.run_id }}
+          path: |
+            backups/*.dump.age
+            backups/*.sha256
+          retention-days: 7
+          if-no-files-found: error
