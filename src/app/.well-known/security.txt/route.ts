@@ -1,0 +1,1 @@
+export function GET(){return new Response('Contact: https://github.com/Manu-2717/pulseflow/security/advisories/new\nExpires: 2027-10-28T00:00:00.000Z\nPreferred-Languages: en\nCanonical: https://pulseflow-theta.vercel.app/.well-known/security.txt\n',{headers:{'Content-Type':'text/plain; charset=utf-8'}})}

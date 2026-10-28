@@ -13,7 +13,7 @@ function refresh(){revalidatePath('/')}
 async function taskAccess(taskId:string){const task=await prisma.task.findUniqueOrThrow({where:{id:taskId},include:{threads:true}});const access=await requireMembership(task.workspaceId);return {task,...access}}
 async function threadAccess(threadId:string){const thread=await prisma.issueThread.findUniqueOrThrow({where:{id:threadId}});const access=await requireMembership(thread.workspaceId);return {thread,...access}}
 async function syncBlocked(taskId:string){const open=await prisma.issueThread.count({where:{taskId,status:'OPEN'}});const task=await prisma.task.findUniqueOrThrow({where:{id:taskId}});if(open&&task.status!=='BLOCKED')await prisma.task.update({where:{id:taskId},data:{status:'BLOCKED',completedAt:null}});if(!open&&task.status==='BLOCKED')await prisma.task.update({where:{id:taskId},data:{status:'IN_PROGRESS'}})}
-export async function createTask(input:{workspaceId:string;title:string;description:string;priority:string;estimatedPts:number;assigneeId?:string|null}){
+export async function createTask(input:{workspaceId:string;title:string;description:string;priority:string;estimatedPts:number;assigneeId?:string|null;projectId?:string|null;sprintId?:string|null;startDate?:string|null;dueDate?:string|null;recurrence?:string|null}){
  const {membership}=await requireMembership(input.workspaceId)
  const title=input.title.trim(),description=input.description.trim()
  if(title.length<3||title.length>160)throw new Error('Task title must be 3–160 characters.')
@@ -21,7 +21,13 @@ export async function createTask(input:{workspaceId:string;title:string;descript
  if(!Object.hasOwn(priorityRank,input.priority))throw new Error('Invalid priority.')
  if(!Number.isInteger(input.estimatedPts)||input.estimatedPts<1||input.estimatedPts>5)throw new Error('Estimate must be 1–5 points.')
  if(input.assigneeId){if(membership.role!=='LEADER')throw new Error('Only a leader can assign a task.');const member=await prisma.membership.findUnique({where:{workspaceId_userId:{workspaceId:input.workspaceId,userId:input.assigneeId}}});if(!member)throw new Error('Assignee is not a member of this workspace.')}
- const created=await prisma.$transaction(async tx=>{const w=await tx.workspace.update({where:{id:input.workspaceId},data:{nextTaskNumber:{increment:1}},select:{nextTaskNumber:true}});const n=w.nextTaskNumber-1;return tx.task.create({data:{workspaceId:input.workspaceId,code:`TSK-${String(n).padStart(2,'0')}`,title,description,priority:input.priority,estimatedPts:input.estimatedPts,status:'QUEUED',assigneeId:input.assigneeId||null}})})
+ if(input.projectId&&!await prisma.project.findFirst({where:{id:input.projectId,workspaceId:input.workspaceId}}))throw new Error('Project is not in this workspace.')
+ if(input.sprintId&&!await prisma.sprint.findFirst({where:{id:input.sprintId,workspaceId:input.workspaceId}}))throw new Error('Sprint is not in this workspace.')
+ if(input.recurrence&&!['DAILY','WEEKLY','MONTHLY'].includes(input.recurrence))throw new Error('Invalid repeat interval.')
+ const parseDate=(value?:string|null)=>{if(!value)return null;if(!/^\d{4}-\d{2}-\d{2}$/.test(value))throw new Error('Invalid date.');const date=new Date(`${value}T12:00:00.000Z`);if(Number.isNaN(date.getTime())||date.toISOString().slice(0,10)!==value)throw new Error('Invalid date.');return date}
+ const startDate=parseDate(input.startDate),dueDate=parseDate(input.dueDate)
+ if(startDate&&dueDate&&startDate>dueDate)throw new Error('Due date must be on or after the start date.')
+ const created=await prisma.$transaction(async tx=>{const w=await tx.workspace.update({where:{id:input.workspaceId},data:{nextTaskNumber:{increment:1}},select:{nextTaskNumber:true}});const n=w.nextTaskNumber-1;return tx.task.create({data:{workspaceId:input.workspaceId,code:`TSK-${String(n).padStart(2,'0')}`,title,description,priority:input.priority,estimatedPts:input.estimatedPts,status:'QUEUED',assigneeId:input.assigneeId||null,projectId:input.projectId||null,sprintId:input.sprintId||null,startDate,dueDate,recurrence:input.recurrence||null}})})
  refresh();return created.code
 }
 export async function updateTask(taskId:string,input:{title?:string;description?:string;priority?:string;estimatedPts?:number;assigneeId?:string|null}){
