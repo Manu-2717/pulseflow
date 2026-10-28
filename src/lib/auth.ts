@@ -3,6 +3,8 @@ import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { prisma } from './prisma'
 import { emailEnabled, passwordEnabled, sendAuthEmail } from './email'
 import { importPKCS8, SignJWT } from 'jose'
+import { genericOAuth } from 'better-auth/plugins/generic-oauth'
+import { fossclubProvider } from './fossclub-oidc'
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
 const githubEnabled = Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET)
@@ -29,6 +31,7 @@ export const auth = betterAuth({
     ...(appleEnabled ? ['https://appleid.apple.com'] : []),
   ],
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
+  plugins: fossclubProvider ? [genericOAuth({config:[fossclubProvider]})] : [],
   emailAndPassword: {
     enabled: passwordEnabled,
     minPasswordLength: 10,

@@ -45,3 +45,5 @@ Sessions and password hashes are managed by Better Auth. Server actions check cu
 ## Operations and project access
 
 See [the operations runbook](docs/operations.md) for availability checks, error logs, encrypted backups and recovery, and search-engine setup. See [project access](docs/project-access-plan.md) for roles, migration rollout, and authorization checks.
+
+USAR FOSS sign-in setup and activation requirements are documented in [OIDC login](docs/oidc-login.md).
