@@ -1,10 +1,11 @@
 'use server'
-import { randomBytes,createHash } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
+import { issueInvitation,redeemInvitation } from '@/lib/invitations'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { authorizeRoleChange } from '@/lib/project-policy'
 import { prisma } from '@/lib/prisma'
-import { requireUser,requireLeader,requireMembership } from '@/lib/access'
+import { requireUser,requireMembership } from '@/lib/access'
 
 const slugify=(text:string)=>text.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)
 export async function createWorkspace(name:string,specialty:string){
@@ -20,29 +21,15 @@ export async function createWorkspace(name:string,specialty:string){
   revalidatePath('/')
   return slug
 }
-export async function createInvite(workspaceId:string){
-  const {user}=await requireLeader(workspaceId)
-  const token=randomBytes(32).toString('base64url')
-  const tokenHash=createHash('sha256').update(token).digest('hex')
-  await prisma.invite.create({data:{workspaceId,tokenHash,createdById:user.id,role:'MEMBER',expiresAt:new Date(Date.now()+7*24*60*60*1000),maxUses:10}})
-  return token
+export async function createInvite(workspaceId:string,projectId?:string){
+  const user=await requireUser()
+  return issueInvitation(prisma,workspaceId,user.id,projectId)
 }
 export async function acceptInvite(token:string){
   const user=await requireUser()
-  if(!/^[A-Za-z0-9_-]{40,60}$/.test(token))throw new Error('Invalid invitation link.')
-  const tokenHash=createHash('sha256').update(token).digest('hex')
-  const invite=await prisma.invite.findUnique({where:{tokenHash},include:{workspace:true}})
-  if(!invite||invite.expiresAt<new Date()||invite.useCount>=invite.maxUses)throw new Error('This invitation has expired or has been used up.')
-  const existing=await prisma.membership.findUnique({where:{workspaceId_userId:{workspaceId:invite.workspaceId,userId:user.id}}})
-  if(!existing){
-    await prisma.$transaction(async tx=>{
-      const updated=await tx.invite.updateMany({where:{id:invite.id,useCount:{lt:invite.maxUses},expiresAt:{gt:new Date()}},data:{useCount:{increment:1}}})
-      if(updated.count!==1)throw new Error('This invitation is no longer available.')
-      await tx.membership.create({data:{workspaceId:invite.workspaceId,userId:user.id,role:invite.role}})
-    })
-  }
-  revalidatePath('/')
-  redirect(`/w/${invite.workspace.slug}`)
+  const result=await redeemInvitation(prisma,token,user.id)
+  revalidatePath('/','layout')
+  redirect(`/w/${result.slug}${result.projectId?`?project=${result.projectId}`:''}`)
 }
 export async function updateProfile(workspaceId:string,specialty:string){
   const {user}=await requireMembership(workspaceId)

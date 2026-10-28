@@ -1,0 +1,70 @@
+import assert from 'node:assert/strict'
+import { createHash,randomUUID } from 'node:crypto'
+import { PrismaClient } from '@prisma/client'
+import { issueInvitation,redeemInvitation } from '../src/lib/invitations'
+import { authorizeProject } from '../src/lib/project-policy'
+
+async function main(){
+ const url=new URL(process.env.DATABASE_URL||'')
+ if(!['localhost','127.0.0.1','[::1]'].includes(url.hostname))throw new Error('Invitation fixtures require a local database.')
+ const db=new PrismaClient(),prefix='invite-'+randomUUID()
+ const ids=['owner','admin','existing','new','legacy','limited-a','limited-b','expired'].map(s=>prefix+s)
+ const [owner,admin,existing,newUser,legacy,limitedA,limitedB,expired]=ids
+ const workspaces:string[]=[]
+ const hash=(token:string)=>createHash('sha256').update(token).digest('hex')
+ try{
+  await db.user.createMany({data:ids.map(id=>({id,name:id,email:id+'@test.invalid'}))})
+  const workspace=await db.workspace.create({data:{name:prefix,slug:prefix,members:{create:[{userId:owner,role:'LEADER'},{userId:admin},{userId:existing}]}}});workspaces.push(workspace.id)
+  const a=await db.project.create({data:{workspaceId:workspace.id,name:'Project A',members:{create:{userId:admin,role:'ADMIN'}}}})
+  const b=await db.project.create({data:{workspaceId:workspace.id,name:'Project B'}})
+  await assert.rejects(issueInvitation(db,workspace.id,admin),/Project access denied/)
+  await assert.rejects(issueInvitation(db,workspace.id,admin,b.id),/Project access denied/)
+  await assert.rejects(issueInvitation(db,workspace.id,existing,a.id),/Project access denied/)
+  const token=await issueInvitation(db,workspace.id,admin,a.id)
+  const stored=await db.invite.findUniqueOrThrow({where:{tokenHash:hash(token)}})
+  assert.equal(stored.projectId,a.id);assert.equal(stored.role,'MEMBER');assert.equal(stored.maxUses,10);assert.notEqual(stored.tokenHash,token)
+  const joined=await redeemInvitation(db,token,newUser)
+  assert.deepEqual(joined,{slug:workspace.slug,projectId:a.id})
+  assert.equal((await db.membership.findUniqueOrThrow({where:{workspaceId_userId:{workspaceId:workspace.id,userId:newUser}}})).role,'MEMBER')
+  assert.equal((await authorizeProject(db,workspace.id,a.id,newUser)).projectRole,'MEMBER')
+  await assert.rejects(authorizeProject(db,workspace.id,b.id,newUser))
+  await redeemInvitation(db,token,newUser)
+  assert.equal((await db.invite.findUniqueOrThrow({where:{id:stored.id}})).useCount,1)
+  await redeemInvitation(db,token,admin)
+  assert.equal((await authorizeProject(db,workspace.id,a.id,admin,true)).projectRole,'ADMIN')
+  assert.equal((await db.invite.findUniqueOrThrow({where:{id:stored.id}})).useCount,1)
+  await redeemInvitation(db,token,existing)
+  assert.equal((await authorizeProject(db,workspace.id,a.id,existing)).projectRole,'MEMBER')
+  const legacyToken=await issueInvitation(db,workspace.id,owner)
+  const legacyResult=await redeemInvitation(db,legacyToken,legacy)
+  assert.equal(legacyResult.projectId,null)
+  await assert.rejects(authorizeProject(db,workspace.id,a.id,legacy))
+  const expiredToken=await issueInvitation(db,workspace.id,owner,a.id)
+  await db.invite.update({where:{tokenHash:hash(expiredToken)},data:{expiresAt:new Date(0)}})
+  await assert.rejects(redeemInvitation(db,expiredToken,expired),/expired/)
+  assert.equal(await db.membership.findUnique({where:{workspaceId_userId:{workspaceId:workspace.id,userId:expired}}}),null)
+  const limited=await issueInvitation(db,workspace.id,owner,a.id)
+  await db.invite.update({where:{tokenHash:hash(limited)},data:{maxUses:1}})
+  const concurrent=await Promise.allSettled([redeemInvitation(db,limited,limitedA),redeemInvitation(db,limited,limitedB)])
+  assert.equal(concurrent.filter(r=>r.status==='fulfilled').length,1)
+  assert.equal((await db.invite.findUniqueOrThrow({where:{tokenHash:hash(limited)}})).useCount,1)
+  assert.equal(await db.membership.count({where:{workspaceId:workspace.id,userId:{in:[limitedA,limitedB]}}}),1)
+  const other=await db.workspace.create({data:{name:prefix+'other',slug:prefix+'other'}});workspaces.push(other.id)
+  const foreign=await db.project.create({data:{workspaceId:other.id,name:'Other workspace project'}})
+  const invalid=await issueInvitation(db,workspace.id,owner,a.id)
+  await db.invite.update({where:{tokenHash:hash(invalid)},data:{projectId:foreign.id}})
+  await assert.rejects(redeemInvitation(db,invalid,expired),/invalid/)
+  assert.equal(await db.membership.findUnique({where:{workspaceId_userId:{workspaceId:workspace.id,userId:expired}}}),null)
+  const deleted=await db.project.create({data:{workspaceId:workspace.id,name:'Temporary project'}})
+  const removed=await issueInvitation(db,workspace.id,owner,deleted.id)
+  await db.project.delete({where:{id:deleted.id}})
+  assert.equal(await db.invite.findUnique({where:{tokenHash:hash(removed)}}),null)
+  await assert.rejects(redeemInvitation(db,removed,expired))
+  console.log('PASS: scoped invitation authorization, direct project entry, existing-member access, preserved admin roles, repeat acceptance, expiry, concurrent use limits, cross-workspace rejection, deleted-project invalidation.')
+ }finally{
+  await db.workspace.deleteMany({where:{id:{in:workspaces}}})
+  await db.user.deleteMany({where:{id:{in:ids}}})
+  await db.$disconnect()
+ }
+}
+main().catch(error=>{console.error(error);process.exitCode=1})

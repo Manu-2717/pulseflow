@@ -4,6 +4,7 @@ import { currentUser } from '@/lib/access'
 import { projectScope } from '@/lib/project-scope'
 import { prisma } from '@/lib/prisma'
 import { Planner } from '@/components/planner'
+import { ProjectAccessNeeded } from '@/components/project-access-needed'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Planning | PulseFlow', robots: { index: false, follow: false } }
@@ -27,6 +28,6 @@ export default async function PlanningPage({params,searchParams}:{params:Promise
   prisma.customField.findMany({where:{workspaceId:scope.owner?workspace.id:'__denied__'},orderBy:{createdAt:'asc'}}),
   prisma.taskTemplate.findMany({where:{workspaceId:scope.owner?workspace.id:'__denied__'},orderBy:{createdAt:'desc'}})
  ])
- if(!scope.owner&&!scope.active)return <main className="planner-page"><div className="planner-wrap"><h1>Project access needed</h1><p>Ask your workspace owner or a project admin to add you to a project before planning work.</p><Link href={`/w/${slug}`}>Return to workspace</Link></div></main>
+ if(!scope.owner&&!scope.active)return <ProjectAccessNeeded workspaceName={workspace.name} email={user.email}/>
  return <><div className="project-selector"><strong>Project scope</strong>{scope.owner&&<Link href={`/w/${slug}/plan`}>All projects</Link>}{scope.projects.map(p=><Link key={p.id} href={`/w/${slug}/plan?project=${p.id}`} aria-current={scope.projectId===p.id?'page':undefined}>{p.name}</Link>)}</div><Planner key={scope.projectId??'all-projects'} selectedProjectId={scope.projectId} workspace={{id:workspace.id,name:workspace.name,slug}} role={scope.owner?'LEADER':scope.manage?'ADMIN':'MEMBER'} asOf={new Date().toISOString()} tasks={JSON.parse(JSON.stringify(tasks))} projects={JSON.parse(JSON.stringify((scope.owner?projects:projects.filter(p=>p.id===scope.projectId)).map(p=>({id:p.id,name:p.name,color:p.color}))))} documents={JSON.parse(JSON.stringify(documents))} goals={JSON.parse(JSON.stringify(goals))} sprints={JSON.parse(JSON.stringify(sprints))} customFields={JSON.parse(JSON.stringify(customFields))} templates={JSON.parse(JSON.stringify(templates))} automationEnabled={automation?.enabled??false}/></>
 }
