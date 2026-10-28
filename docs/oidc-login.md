@@ -30,4 +30,6 @@ Signing out ends the PulseFlow session. It does not sign the person out of every
 
 ## Upstream registration
 
+Registration PR: [USAR-FOSS/OIDC #11](https://github.com/USAR-FOSS/OIDC/pull/11). It is open for provider-maintainer review.
+
 The requested `clients.json` registration is confidential, `trusted:true`, and `require_member:false`. Trusted status skips the provider's consent prompt after upstream review and deployment. Shared secret provisioning is still required on both services.
