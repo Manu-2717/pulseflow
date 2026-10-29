@@ -16,102 +16,95 @@ HIDE_DEV_TOOLS = '''
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
-    
-    # 1. Landing Hero (1440x900)
-    print('1. Capturing 01-landing-hero.png...')
-    context = browser.new_context(viewport={'width': 1440, 'height': 900}, device_scale_factor=2)
-    page = context.new_page()
-    page.goto('http://localhost:3000')
-    page.wait_for_selector('.hero-demo')
-    page.add_style_tag(content=HIDE_DEV_TOOLS)
-    page.wait_for_timeout(2000)
-    page.screenshot(path='docs/images/01-landing-hero.png')
-    context.close()
 
-    # 2. Login Context
-    context = browser.new_context(viewport={'width': 1440, 'height': 1180}, device_scale_factor=2)
-    page = context.new_page()
-    page.goto('http://localhost:3000/login')
-    page.add_style_tag(content=HIDE_DEV_TOOLS)
-    page.fill('input[name="email"]', 'alex@pulseflow.dev')
-    page.fill('input[name="password"]', 'Password12345!')
-    with page.expect_response(lambda r: '/api/auth/' in r.url):
-        page.click('button[type="submit"]')
-    page.wait_for_timeout(1000)
+    # 1. Landing Hero
+    print('1. Capturing landing-hero.png...')
+    ctx1 = browser.new_context(viewport={'width': 1360, 'height': 820}, device_scale_factor=2)
+    p1 = ctx1.new_page()
+    p1.goto('http://localhost:3000')
+    p1.wait_for_selector('.hero-demo')
+    p1.add_style_tag(content=HIDE_DEV_TOOLS)
+    p1.wait_for_timeout(1500)
+    p1.screenshot(path='docs/images/landing-hero.png')
+    ctx1.close()
 
-    # 3. Workspace Dashboard with Capacity Radar
-    print('2. Capturing 02-workspace-dashboard.png...')
-    page.goto('http://localhost:3000/w/pulseflow-eng')
-    page.wait_for_selector('.task-row')
-    page.add_style_tag(content=HIDE_DEV_TOOLS)
-    
-    # Open Team Workload details if present
-    workload_details = page.locator('details.secondary-tools', has_text='Team workload')
-    if workload_details.count() > 0:
-        workload_details.locator('summary').click()
-        page.wait_for_timeout(500)
-    
-    page.screenshot(path='docs/images/02-workspace-dashboard.png')
+    # Log in session for authenticated views
+    ctx2 = browser.new_context(viewport={'width': 1360, 'height': 880}, device_scale_factor=2)
+    p2 = ctx2.new_page()
+    p2.goto('http://localhost:3000/login')
+    p2.add_style_tag(content=HIDE_DEV_TOOLS)
+    p2.fill('input[name="email"]', 'alex@pulseflow.dev')
+    p2.fill('input[name="password"]', 'Password12345!')
+    with p2.expect_response(lambda r: '/api/auth/' in r.url):
+        p2.click('button[type="submit"]')
+    p2.wait_for_timeout(1000)
 
-    # 4. Blocker Brief Drawer with AI summary and code snippet
-    print('3. Capturing 03-blocker-brief.png...')
-    # Open TSK-03
-    page.locator('.task-row', has_text='TSK-03').locator('.task-primary').click()
-    page.wait_for_selector('.drawer')
-    page.add_style_tag(content=HIDE_DEV_TOOLS)
-    page.wait_for_timeout(500)
-    
+    # 2. Main Dashboard & Tasks View
+    print('2. Capturing dashboard.png...')
+    p2.goto('http://localhost:3000/w/pulseflow-eng')
+    p2.wait_for_selector('.task-row')
+    p2.add_style_tag(content=HIDE_DEV_TOOLS)
+    p2.wait_for_timeout(1000)
+    p2.screenshot(path='docs/images/dashboard.png')
+
+    # 3. Blocker Brief Drawer with AI summary & code patch
+    print('3. Capturing blocker-brief.png...')
+    p2.locator('.task-row', has_text='TSK-03').locator('.task-primary').click()
+    p2.wait_for_selector('.drawer')
+    p2.add_style_tag(content=HIDE_DEV_TOOLS)
+    p2.wait_for_timeout(500)
+
     # Open Blockers & discussion
-    discussion_details = page.locator('details.task-discussions summary')
-    if discussion_details.count() > 0:
-        discussion_details.click()
-        page.wait_for_timeout(500)
-    
+    disc = p2.locator('details.task-discussions summary')
+    if disc.count() > 0:
+        disc.click()
+        p2.wait_for_timeout(500)
+
     # Click thread card
-    thread_card = page.locator('.thread-card').first
-    if thread_card.count() > 0:
-        thread_card.click()
-        page.wait_for_timeout(800)
-    
-    # Scroll drawer so the AI brief and code solution are nicely centered
-    page.evaluate('''() => {
+    thread = p2.locator('.thread-card').first
+    if thread.count() > 0:
+        thread.click()
+        p2.wait_for_timeout(800)
+
+    # Scroll drawer so the AI brief and code solution are prominently framed
+    p2.evaluate('''() => {
         const brief = document.querySelector('.brief-card');
         if (brief) {
             brief.scrollIntoView({ behavior: 'instant', block: 'start' });
         }
     }''')
-    page.wait_for_timeout(500)
-    page.screenshot(path='docs/images/03-blocker-brief.png')
-    
+    p2.wait_for_timeout(600)
+    p2.screenshot(path='docs/images/blocker-brief.png')
+
     # Close drawer
-    close_btn = page.locator('.drawer-top button.icon-button')
+    close_btn = p2.locator('.drawer-top button.icon-button')
     if close_btn.count() > 0:
         close_btn.click()
-        page.wait_for_timeout(500)
+        p2.wait_for_timeout(400)
 
-    # 5. Planning Suite - Gantt View (1440x900)
-    print('4. Capturing 04-planning-gantt.png...')
-    page.set_viewport_size({'width': 1440, 'height': 900})
-    page.goto('http://localhost:3000/w/pulseflow-eng/plan')
-    page.wait_for_selector('.planner-toolbar')
-    page.add_style_tag(content=HIDE_DEV_TOOLS)
-    page.get_by_role('button', name='gantt', exact=True).click()
-    page.wait_for_timeout(1000)
-    page.screenshot(path='docs/images/04-planning-gantt.png')
+    # 4. Capacity Radar Cards (Focused Crop/View)
+    print('4. Capturing capacity-radar.png...')
+    workload = p2.locator('details.secondary-tools', has_text='Team workload')
+    if workload.count() > 0:
+        workload.locator('summary').click()
+        p2.wait_for_timeout(500)
+    
+    cap = p2.locator('.capacity-section')
+    if cap.count() > 0:
+        cap.scroll_into_view_if_needed()
+        p2.wait_for_timeout(500)
+        p2.screenshot(path='docs/images/capacity-radar.png')
 
-    # 6. Planning Suite - Sprints View
-    print('5. Capturing 05-planning-sprints.png...')
-    page.get_by_role('button', name='sprints', exact=True).click()
-    page.wait_for_timeout(1000)
-    page.screenshot(path='docs/images/05-planning-sprints.png')
+    # 5. Planning Suite - Gantt View
+    print('5. Capturing planning-gantt.png...')
+    p2.goto('http://localhost:3000/w/pulseflow-eng/plan')
+    p2.wait_for_selector('.planner-toolbar')
+    p2.add_style_tag(content=HIDE_DEV_TOOLS)
+    p2.get_by_role('button', name='gantt', exact=True).click()
+    p2.wait_for_timeout(1000)
+    p2.screenshot(path='docs/images/planning-gantt.png')
 
-    # 7. Planning Suite - Goals View
-    print('6. Capturing 06-planning-goals.png...')
-    page.get_by_role('button', name='goals', exact=True).click()
-    page.wait_for_timeout(1000)
-    page.screenshot(path='docs/images/06-planning-goals.png')
-
-    context.close()
+    ctx2.close()
     browser.close()
 
-print('All screenshots refreshed successfully!')
+print('Compact visual assets captured successfully!')
