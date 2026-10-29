@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 250" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Dark Mint Tech Background Gradient -->
+    <linearGradient id="bannerBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1a13"/>
+      <stop offset="60%" stop-color="#122a1e"/>
+      <stop offset="100%" stop-color="#08140e"/>
+    </linearGradient>
+
+    <!-- Radial Mint Accent -->
+    <radialGradient id="mintLight" cx="15%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#8ee6ae" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#8ee6ae" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Dotted Texture Pattern -->
+    <pattern id="gridDots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.1" fill="#8ee6ae" fill-opacity="0.14"/>
+    </pattern>
+  </defs>
+
+  <!-- Base & Texture -->
+  <rect width="1100" height="250" rx="14" fill="url(#bannerBg)"/>
+  <rect width="1100" height="250" rx="14" fill="url(#mintLight)"/>
+  <rect width="1100" height="250" rx="14" fill="url(#gridDots)"/>
+  <rect width="1100" height="250" rx="14" stroke="#1f4e38" stroke-width="1.8"/>
+
+  <!-- Logo Mark -->
+  <g transform="translate(60, 48)">
+    <rect width="52" height="52" rx="13" fill="#143b27" stroke="#8ee6ae" stroke-width="2"/>
+    <path d="M16 26h6l4-10 6 20 4-10h6" stroke="#8ee6ae" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Title & Status Badge -->
+  <g transform="translate(130, 52)">
+    <text x="0" y="34" fill="#ffffff" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-size="38" font-weight="800" letter-spacing="-0.03em">pulseflow</text>
+    <rect x="180" y="12" width="84" height="24" rx="12" fill="#143b27" stroke="#4ade80" stroke-width="1"/>
+    <circle cx="192" cy="24" r="3.5" fill="#4ade80"/>
+    <text x="202" y="28" fill="#8ee6ae" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="10.5" font-weight="700" letter-spacing="0.04em">v1.0 FOSS</text>
+  </g>
+
+  <!-- Headline & Subtitle -->
+  <text x="60" y="140" fill="#f0fdf4" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-size="18" font-weight="600" letter-spacing="-0.01em">
+    Self-hosted team task board with live capacity, smart dispatch, and focused blocker threads.
+  </text>
+  <text x="60" y="166" fill="#a7f3d0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-size="13.5" font-weight="400">
+    Tactile paper UI • Optimistic execution • Built-in AI root cause analysis • Full planning suite with Gantt schedules
+  </text>
+
+  <!-- Badges Row -->
+  <g transform="translate(60, 196)">
+    <!-- Next.js 16 -->
+    <rect x="0" y="0" width="86" height="28" rx="6" fill="#0d2419" stroke="#24583e"/>
+    <text x="43" y="18" fill="#e2e8f0" font-family="monospace" font-size="11" font-weight="600" text-anchor="middle">Next.js 16</text>
+
+    <!-- React 19 -->
+    <rect x="94" y="0" width="82" height="28" rx="6" fill="#0d2419" stroke="#24583e"/>
+    <text x="135" y="18" fill="#e2e8f0" font-family="monospace" font-size="11" font-weight="600" text-anchor="middle">React 19</text>
+
+    <!-- TypeScript -->
+    <rect x="184" y="0" width="94" height="28" rx="6" fill="#0d2419" stroke="#24583e"/>
+    <text x="231" y="18" fill="#e2e8f0" font-family="monospace" font-size="11" font-weight="600" text-anchor="middle">TypeScript</text>
+
+    <!-- PostgreSQL + Prisma -->
+    <rect x="286" y="0" width="144" height="28" rx="6" fill="#0d2419" stroke="#24583e"/>
+    <text x="358" y="18" fill="#e2e8f0" font-family="monospace" font-size="11" font-weight="600" text-anchor="middle">Postgres + Prisma</text>
+
+    <!-- Better Auth -->
+    <rect x="438" y="0" width="94" height="28" rx="6" fill="#0d2419" stroke="#24583e"/>
+    <text x="485" y="18" fill="#e2e8f0" font-family="monospace" font-size="11" font-weight="600" text-anchor="middle">Better Auth</text>
+
+    <!-- Docker Ready -->
+    <rect x="540" y="0" width="104" height="28" rx="6" fill="#0d2419" stroke="#24583e"/>
+    <text x="592" y="18" fill="#8ee6ae" font-family="monospace" font-size="11" font-weight="600" text-anchor="middle">Docker Ready</text>
+  </g>
+</svg>
