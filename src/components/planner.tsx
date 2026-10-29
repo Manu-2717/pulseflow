@@ -15,7 +15,7 @@ type Sprint={id:string;name:string;goal:string;startDate:string;endDate:string}
 type CustomField={id:string;name:string;type:string;options:string[]|null}
 type Template={id:string;name:string;description:string;priority:string;estimatedPts:number}
 type View='list'|'board'|'calendar'|'timeline'|'gantt'|'timesheets'|'sprints'|'fields'|'templates'|'docs'|'goals'|'dashboard'
-const statuses=['QUEUED','IN_PROGRESS','BLOCKED','DONE']
+const statuses=['QUEUED','IN_PROGRESS','IN_REVIEW','BLOCKED','DONE']
 const label=(v:string)=>v.replaceAll('_',' ').toLowerCase()
 const day=(v:string|null)=>v?new Date(v).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}):'No date'
 const iso=(v:string|null)=>v?v.slice(0,10):''

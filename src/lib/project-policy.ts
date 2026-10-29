@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
-export async function authorizeProject(db:PrismaClient,workspaceId:string,projectId:string|null,userId:string,manage=false){
+export async function authorizeProject(db:Pick<PrismaClient,'membership'|'project'|'projectMembership'>,workspaceId:string,projectId:string|null,userId:string,manage=false){
  const membership=await db.membership.findUnique({where:{workspaceId_userId:{workspaceId,userId}}})
  if(!membership)throw new Error('Workspace access denied.')
  const project=projectId?await db.project.findFirst({where:{id:projectId,workspaceId}}):null
@@ -11,7 +11,7 @@ export async function authorizeProject(db:PrismaClient,workspaceId:string,projec
  return {membership,projectRole:member.role}
 }
 export function authorizeRoleChange(owner:boolean,existingRole:string|undefined,newRole:string|null){
- if(newRole!==null&&newRole!=='ADMIN'&&newRole!=='MEMBER')throw new Error('Invalid project role.')
+ if(newRole!==null&&newRole!=='ADMIN'&&newRole!=='MEMBER'&&newRole!=='MENTOR')throw new Error('Invalid project role.')
  if(!owner&&(newRole==='ADMIN'||existingRole==='ADMIN'))throw new Error('Only the workspace owner manages project admins.')
 }
 

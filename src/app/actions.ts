@@ -1,9 +1,10 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
-import { requireLeader,requireMembership,requireProject,requireTask,requireAssignee } from '@/lib/access'
+import { requireLeader,requireMembership,requireProject,requireTask,requireAssignee,requireUser } from '@/lib/access'
 
-type TaskStatus = 'QUEUED'|'IN_PROGRESS'|'BLOCKED'|'DONE'
+import { transitionTask,postTaskComment } from '@/lib/task-review'
+import type { Task as DatabaseTask } from '@prisma/client'
 const priorityRank:Record<string,number>={CRITICAL:4,HIGH:3,MEDIUM:2,LOW:1}
 const specialtyTerms:Record<string,string[]>={Frontend:['frontend','navigation','mobile','accessible','search','ui','layout'],Backend:['api','oauth','database','webhook','session','rate limit'], 'AI/ML':['ai','model','recommendation','training','summary'],Systems:['event','pipeline','incident','observability','deployment','retry'],Design:['design','tokens','empty state','visual']}
 function rankTask<T extends {priority:string,createdAt:Date}>(a:T,b:T){return (priorityRank[b.priority]??0)-(priorityRank[a.priority]??0)||a.createdAt.getTime()-b.createdAt.getTime()}
@@ -42,20 +43,31 @@ export async function updateTask(taskId:string,input:{title?:string;description?
  await prisma.task.update({where:{id:taskId},data});refresh()
 }
 export async function cycleTask(taskId:string,autoPull:boolean){
- const {task,user,membership,projectRole}=await taskAccess(taskId)
- if(membership.role!=='LEADER'&&projectRole!=='ADMIN'&&task.assigneeId!==user.id)throw new Error('Only the assignee or leader can update this task.')
- const next:TaskStatus=task.status==='DONE'?'QUEUED':task.status==='QUEUED'?'IN_PROGRESS':'DONE'
- if(next==='DONE'&&task.threads.some(t=>t.status==='OPEN'))throw new Error('Resolve open blocker threads before completing this task.')
- if(next==='IN_PROGRESS'){const pendingDependencies=await prisma.taskDependency.count({where:{taskId,dependsOn:{status:{not:'DONE'}}}});if(pendingDependencies)throw new Error('Complete dependent tasks before starting this task.')}
- await prisma.task.update({where:{id:taskId},data:{status:next,completedAt:next==='DONE'?new Date():null}})
+ const user=await requireUser()
+ const {task,next}=await transitionTask(prisma,taskId,user.id,'advance')
+ await taskCompletionEffects(task,next,autoPull)
+ refresh()
+}
+export async function reviewTask(taskId:string,decision:'approve'|'request_changes',feedback:string){
+ const user=await requireUser()
+ if(!['approve','request_changes'].includes(decision))throw new Error('Invalid review decision.')
+ const {task,next}=await transitionTask(prisma,taskId,user.id,decision,feedback)
+ await taskCompletionEffects(task,next,false)
+ refresh()
+}
+export async function addTaskComment(taskId:string,content:string){
+ const user=await requireUser()
+ await postTaskComment(prisma,taskId,user.id,content)
+ refresh()
+}
+async function taskCompletionEffects(task:DatabaseTask,next:string,autoPull:boolean){
  if(next==='DONE'&&task.recurrence){const recurrence=task.recurrence;try{await prisma.$transaction(async tx=>{const exists=await tx.task.findUnique({where:{recurrenceSourceId:task.id}});if(exists)return;const workspace=await tx.workspace.update({where:{id:task.workspaceId},data:{nextTaskNumber:{increment:1}},select:{nextTaskNumber:true}});const n=workspace.nextTaskNumber-1;const source=await tx.task.findUniqueOrThrow({where:{id:task.id},include:{subtasks:true}});await tx.task.create({data:{workspaceId:task.workspaceId,code:`TSK-${String(n).padStart(2,'0')}`,title:task.title,description:task.description,priority:task.priority,estimatedPts:task.estimatedPts,status:'QUEUED',assigneeId:task.assigneeId,projectId:task.projectId,sprintId:null,recurrence,recurrenceSourceId:task.id,startDate:task.startDate?nextRepeatDate(task.startDate,recurrence):null,dueDate:nextRepeatDate(task.dueDate??new Date(),recurrence),subtasks:{create:source.subtasks.map(s=>({title:s.title}))}}})})}catch(error){if((error as {code?:string}).code!=='P2002')throw error}}
  const rule=next==='DONE'?await prisma.automationRule.findUnique({where:{workspaceId_trigger_action:{workspaceId:task.workspaceId,trigger:'TASK_COMPLETED',action:'AUTO_PULL_NEXT'}}}):null
- if(next==='DONE'&&(autoPull||rule?.enabled)&&task.assigneeId){const active=await prisma.task.count({where:{workspaceId:task.workspaceId,projectId:task.projectId,assigneeId:task.assigneeId,status:{in:['IN_PROGRESS','BLOCKED']}}});if(!active){const queue=await prisma.task.findMany({where:{workspaceId:task.workspaceId,projectId:task.projectId,status:'QUEUED',assigneeId:null,predecessors:{none:{dependsOn:{status:{not:'DONE'}}}}}});const member=await prisma.user.findUniqueOrThrow({where:{id:task.assigneeId}});queue.sort((a,b)=>rankTask(a,b)||matchScore(b,member.specialty)-matchScore(a,member.specialty));if(queue[0])await prisma.task.updateMany({where:{id:queue[0].id,status:'QUEUED',assigneeId:null},data:{assigneeId:member.id,status:'IN_PROGRESS'}})}}
- refresh()
+ if(next==='DONE'&&(autoPull||rule?.enabled)&&task.assigneeId){const active=await prisma.task.count({where:{workspaceId:task.workspaceId,projectId:task.projectId,assigneeId:task.assigneeId,status:{in:['IN_PROGRESS','BLOCKED','IN_REVIEW']}}});if(!active){const queue=await prisma.task.findMany({where:{workspaceId:task.workspaceId,projectId:task.projectId,status:'QUEUED',assigneeId:null,predecessors:{none:{dependsOn:{status:{not:'DONE'}}}}}});const member=await prisma.user.findUniqueOrThrow({where:{id:task.assigneeId}});queue.sort((a,b)=>rankTask(a,b)||matchScore(b,member.specialty)-matchScore(a,member.specialty));if(queue[0])await prisma.task.updateMany({where:{id:queue[0].id,status:'QUEUED',assigneeId:null},data:{assigneeId:member.id,status:'IN_PROGRESS'}})}}
 }
 export async function dispatchTasks(workspaceId:string,projectId?:string){
  if(projectId)await requireProject(workspaceId,projectId,true);else await requireLeader(workspaceId)
- const members=await prisma.membership.findMany({where:{workspaceId,...(projectId?{user:{projectMemberships:{some:{projectId}}}}:{role:'MEMBER'})},include:{user:{include:{tasks:{where:{workspaceId,...(projectId?{projectId}:{}),status:{in:['IN_PROGRESS','BLOCKED']}}}}}}})
+ const members=await prisma.membership.findMany({where:{workspaceId,...(projectId?{user:{projectMemberships:{some:{projectId}}}}:{role:'MEMBER'})},include:{user:{include:{tasks:{where:{workspaceId,...(projectId?{projectId}:{}),status:{in:['IN_PROGRESS','BLOCKED','IN_REVIEW']}}}}}}})
  if(!members.length)throw new Error('Invite a team member before dispatching tasks.')
  const queue=await prisma.task.findMany({where:{workspaceId,...(projectId?{projectId}:{}),status:'QUEUED',assigneeId:null}});queue.sort(rankTask)
  const load=new Map(members.map(m=>[m.userId,{count:m.user.tasks.length,points:m.user.tasks.reduce((n,t)=>n+t.estimatedPts,0)}]))

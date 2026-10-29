@@ -39,13 +39,13 @@ export async function updateProfile(workspaceId:string,specialty:string){
   revalidatePath('/')
 }
 
-export async function setProjectMember(projectId:string,userId:string,role:'ADMIN'|'MEMBER'|null){
+export async function setProjectMember(projectId:string,userId:string,role:'ADMIN'|'MEMBER'|'MENTOR'|null){
  const project=await prisma.project.findUniqueOrThrow({where:{id:projectId}})
  const {requireProject}=await import('@/lib/access')
  const context=await requireProject(project.workspaceId,projectId,true)
  const target=await prisma.membership.findUnique({where:{workspaceId_userId:{workspaceId:project.workspaceId,userId}}})
  if(!target)throw new Error('Choose a workspace member.')
- if(role!==null&&role!=='ADMIN'&&role!=='MEMBER')throw new Error('Invalid project role.')
+ if(role!==null&&role!=='ADMIN'&&role!=='MEMBER'&&role!=='MENTOR')throw new Error('Invalid project role.')
  const existing=await prisma.projectMembership.findUnique({where:{projectId_userId:{projectId,userId}}})
  authorizeRoleChange(context.membership.role==='LEADER',existing?.role,role)
  await prisma.$transaction(async tx=>{
