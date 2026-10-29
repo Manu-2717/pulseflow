@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import './workspace.css'
 import { RuntimeMonitor } from '@/components/runtime-monitor'
 const origin = process.env.SITE_URL || process.env.BETTER_AUTH_URL || 'http://localhost:3000'
 export const metadata:Metadata={
