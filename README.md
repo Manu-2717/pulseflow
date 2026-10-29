@@ -1,49 +1,236 @@
-# PulseFlow
+<div align="center">
 
-PulseFlow is a self-hosted team task board with live capacity, smart dispatch, and focused blocker threads. The interface uses a light dotted canvas, paper navigation, mint highlights, cut-paper type, and gentle motion. The graphics and product UI are original.
+<img src="docs/images/pulseflow-banner.svg" alt="PulseFlow Banner" width="100%" />
 
-## What works
+<br/><br/>
 
-- Email/password accounts, optional Google, GitHub, and Apple OAuth, and SMTP-backed verification and password recovery.
-- Multiple workspaces, member invitations, role-based task actions, and workspace-scoped data.
-- Tasks with priorities, estimates, assignees, live workload cards, optimistic status updates, and smart dispatch.
-- Per-task blocker threads, comments with code snippets, accepted solutions, and AI briefs. Briefs use OpenAI when configured and a local deterministic analyzer otherwise.
-- Responsive public landing, signup, onboarding, and workspace dashboard.
+[![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2-20232A?style=for-the-badge&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-## Run locally
+<p align="center">
+  <b>Less stuck. More flow.</b><br/>
+  The self-hosted team task board that monitors live workload, dispatches work with context, and gives every blocker its own space to get solved.
+</p>
 
-Requires Node.js 22+ and PostgreSQL 16+.
+[Quickstart](#-quickstart) • [Visual Tour](#-visual-tour) • [Architecture](#-architecture--workflow) • [Planning Suite](#-planning-suite) • [Docker Deployment](#-portable-docker-deployment) • [Operations](#-security--operations)
 
-1. `cp .env.example .env` and set `DATABASE_URL`, `BETTER_AUTH_URL=http://localhost:3000`, and a random `BETTER_AUTH_SECRET` of at least 32 characters.
-2. `npm ci`
-3. `npx prisma migrate deploy`
-4. `npm run dev`
-5. Open `http://localhost:3000`, create an account, create a workspace, and invite another member.
+</div>
 
-For production, use `npm run build` followed by `npm run start`. The build applies pending Prisma migrations before compiling, including on Vercel. The database starts empty; each team creates its own workspace and tasks.
+---
 
-The Planning suite at `/w/[slug]/plan` adds workspace projects, task list and board views, upcoming dates, a timeline and Gantt schedule, weekly timesheets, sprints, custom fields, recurring tasks, reusable task templates, subtasks, dependencies, time logs, shared documents, measurable goals, reporting, and an optional auto-pull automation. Leaders manage projects, schedules, sprints, field definitions, recurrence, templates, dependencies, goals, and automation; workspace members can create tasks from templates and contribute field values, subtasks, time logs, and documents.
+## 🌟 Overview
 
-Tasks can link public GitHub pull requests (with manually refreshed status) and Google Drive documents. Scheduled tasks offer an explicit Add to Google Calendar link. These links do not grant PulseFlow private repository or Google account access; private content remains governed by the linked provider's own sharing permissions.
+**PulseFlow** is a modern, self-hosted team workspace engineered to eliminate coordination friction. Traditional project management tools often turn into passive issue graveyards where blockers get lost in endless comment threads and task allocation ignores individual bandwidth. 
 
-## Portable Docker deployment
+PulseFlow solves this by treating work as a dynamic flow:
+- **Live Team Capacity Radar**: Instantly displays teammate availability (*Free*, *Active*, *Overloaded*, *Blocked*) before work is dispatched.
+- **Context-Aware Smart Dispatch**: Matches queued tasks with team member specialties and real-time workload.
+- **Dedicated Blocker Spaces**: Isolates problems into actionable sub-threads with AI-assisted root cause analysis, code snippets, and pinned solutions.
+- **Full Planning Suite**: Built-in Gantt timelines, sprints, custom fields, task templates, measurable team goals, and timesheets.
+- **Tactile Original Interface**: Designed with a light dotted canvas, paper-inspired navigation, mint highlights, and snappy optimistic state updates.
 
-The included `Dockerfile` and `docker-compose.yml` run Next.js and PostgreSQL together. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`, `BETTER_AUTH_URL` and `SITE_URL` to your public HTTPS origin, and `BETTER_AUTH_SECRET`. `SITE_URL` supplies the canonical URL and sitemap address. Set the SMTP variables below before inviting real people. Then run `docker compose up --build -d`. A separate one-shot migration container applies migrations before the unprivileged web container starts. Put an HTTPS reverse proxy on the same host in front of port 3000 and back up the named PostgreSQL volume. `/api/health` checks database connectivity.
+---
 
-Use a URL-safe `POSTGRES_PASSWORD` if you use the Compose file as written, since it is interpolated into a database URL. Do not commit `.env`.
+## 🔄 Architecture & Workflow
 
-## Account setup
+PulseFlow integrates every phase of task execution—from dispatch and active development to blocker resolution and long-term planning—into a cohesive pipeline:
 
-Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM` for email verification and password reset. When SMTP is configured, new email/password accounts must verify their address before signing in. Without SMTP, local development can use email/password accounts; production disables password signup and login until SMTP is configured. Configure and test SMTP before public email signup.
+<div align="center">
+  <img src="docs/images/pulseflow-workflow.svg" alt="PulseFlow Workflow Lifecycle" width="100%" />
+</div>
 
-To enable Google login, create OAuth credentials in Google Cloud, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and authorize `https://YOUR_DOMAIN/api/auth/callback/google`. The Google button appears only when both variables are present. GitHub OAuth uses `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` with callback `https://YOUR_DOMAIN/api/auth/callback/github`; creating an OAuth App is free. Apple sign-in uses `APPLE_CLIENT_ID` (Service ID), `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY` (the `.p8` key), with callback `https://YOUR_DOMAIN/api/auth/callback/apple`. Apple requires an active paid Apple Developer Program membership and an HTTPS domain, so its button appears only after you provide those credentials. Set `OPENAI_API_KEY` only if you want model-generated blocker briefs.
+1. **Live Capacity**: Tracks bandwidth and points across teammates in real time.
+2. **Smart Dispatch**: Routes queued backlog items to available members matching task requirements.
+3. **Fast Execution**: Optimistic Kanban transitions, task drawer checklists, and explicit review gates.
+4. **Blocker Spaces**: Isolates impediments into dedicated threads with automated AI root-cause summaries and pinned code fixes.
+5. **Planning Suite**: Connects daily tasks into high-level Gantt schedules, sprint cycles, and measurable goals.
 
-## Security and operations
+---
 
-Sessions and password hashes are managed by Better Auth. Server actions check current membership and leader permissions before reading or changing workspace records; invite tokens are stored as hashes and expire after seven days or ten uses. Deploy behind HTTPS, keep all secrets in your hosting secret manager, configure backups, and monitor the health endpoint. The included Docker Compose setup is a portable starting point. Its web port binds to loopback for a same-host HTTPS proxy. AI-generated briefs are limited to ten paid requests per member per hour, one generation per thread per minute, bounded prompt size, and a 12-second provider timeout. Choose your host, domain, SMTP provider, and OAuth credentials before making the service public.
+## 📸 Visual Tour
 
-## Operations and project access
+### 1. Tactile Public Landing & Team Desk
+Original paper typography, dotted canvas layout, and live interactive capacity previews.
 
-See [the operations runbook](docs/operations.md) for availability checks, error logs, encrypted backups and recovery, and search-engine setup. See [project access](docs/project-access-plan.md) for roles, migration rollout, and authorization checks.
+![PulseFlow Landing Page](docs/images/01-landing-hero.png)
 
-USAR FOSS sign-in setup and activation requirements are documented in [OIDC login](docs/oidc-login.md).
+---
+
+### 2. Workspace Command Center & Capacity Radar
+A live birds-eye view of team progress. Filter by assignee, status, or search via keyboard shortcuts (`⌘K` or `/`).
+
+![PulseFlow Workspace Dashboard](docs/images/02-workspace-dashboard.png)
+
+#### Live Capacity Radar
+Know who has room before delegating tasks. Avoid overloading teammates and quickly spot who is blocked.
+
+![PulseFlow Capacity Radar](docs/images/02b-capacity-radar.png)
+
+---
+
+### 3. Dedicated Blocker Spaces & AI Root Cause Briefs
+Blockers get their own isolated conversation rather than polluting the main task description. Generate structured AI briefs (TL;DR, Root Cause, Unblock Action Plan) and pin accepted code solutions.
+
+![PulseFlow Blocker Brief Drawer](docs/images/03-blocker-brief.png)
+
+> [!TIP]
+> PulseFlow includes an automated local deterministic analyzer fallback. If external AI credentials are not configured or rate limits are reached, structured briefs continue working offline without interruption.
+
+---
+
+### 4. Interactive Gantt Schedule & Project Timelines
+Visualize dates and task durations across multiple projects on a clean timeline.
+
+![PulseFlow Planning Gantt Schedule](docs/images/04-planning-gantt.png)
+
+---
+
+### 5. Sprints, Team Goals & Workspace Toolkit
+Plan work cycles, track completion rates, and set measurable targets for the team.
+
+<div align="center">
+  <img src="docs/images/05-planning-sprints.png" alt="Sprints View" width="49%" />
+  <img src="docs/images/06-planning-goals.png" alt="Goals View" width="49%" />
+</div>
+
+---
+
+## 🚀 Quickstart
+
+### Prerequisites
+- **Node.js** 22.0+
+- **PostgreSQL** 16+ (or cloud PostgreSQL such as [Neon](https://neon.tech))
+- **npm** 10+
+
+### 1. Clone & Configure
+```bash
+git clone https://github.com/kaushikharsh99/pulseflow.git
+cd pulseflow
+cp .env.example .env
+```
+
+Edit `.env` with your PostgreSQL database URL and session secret:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/pulseflow?schema=public"
+BETTER_AUTH_URL="http://localhost:3000"
+SITE_URL="http://localhost:3000"
+BETTER_AUTH_SECRET="generate-a-secure-secret-of-at-least-32-characters"
+```
+
+### 2. Install Dependencies & Migrate
+```bash
+npm install
+npx prisma migrate deploy
+```
+
+### 3. (Optional) Seed Demo Workspace
+To immediately explore PulseFlow with sample teammates, tasks, blocker threads, Gantt data, and sprints:
+```bash
+node scripts/seed-demo.mjs
+```
+*Creates user `alex@pulseflow.dev` (Password: `Password12345!`) with a ready-to-use workspace `pulseflow-eng`.*
+
+### 4. Launch Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🗂 Planning Suite (`/w/[slug]/plan`)
+
+The Planning Suite provides project leaders and workspace members with deep tooling:
+
+| View | Purpose |
+| :--- | :--- |
+| **List & Board** | Filter tasks by project, sprint, priority, and completion status. |
+| **Gantt Schedule** | Draggable bars showing start-to-due dates with duration calculations. |
+| **Timeline** | Sequential milestone overview sorted chronologically. |
+| **Calendar** | Upcoming deadlines with one-click **Add to Google Calendar** (RFC 5545). |
+| **Weekly Timesheets** | Aggregated time entries per teammate and task. |
+| **Sprints** | Iteration management with automatic progress meters and burndown visibility. |
+| **Custom Fields** | Define `TEXT`, `NUMBER`, `DATE`, or `SELECT` dropdown fields per workspace. |
+| **Task Templates** | Pre-configure reusable tasks with default estimates and priority. |
+| **Workspace Docs** | Shared documentation, RFCs, and decision records close to the work. |
+| **Team Goals** | Track high-level measurable milestones with live progress indicators. |
+| **Auto-Pull Automation** | Automatically assigns the highest-priority queued task when a member finishes work. |
+
+---
+
+## 🐳 Portable Docker Deployment
+
+PulseFlow includes a production-ready `Dockerfile` and `docker-compose.yml` configured with an isolated PostgreSQL database and automated migration container:
+
+```bash
+# 1. Prepare environment
+cp .env.example .env
+
+# 2. Build and start containers
+docker compose up --build -d
+```
+
+- **Health Check**: Endpoint `/api/health` validates live database connectivity.
+- **Security**: The web application runs in an unprivileged container behind loopback for reverse proxying via Caddy, Traefik, or Nginx.
+- **Database Volumes**: Data is persisted in a named Docker volume (`postgres_data`).
+
+---
+
+## ⚙️ Configuration Reference
+
+| Environment Variable | Description | Default / Required |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | PostgreSQL connection string | **Required** |
+| `BETTER_AUTH_SECRET` | Cryptographic secret for signing sessions (min 32 chars) | **Required** |
+| `BETTER_AUTH_URL` | Public origin URL for Better Auth | `http://localhost:3000` |
+| `SITE_URL` | Canonical origin used for metadata and sitemaps | `http://localhost:3000` |
+| `OPENAI_API_KEY` | Optional API key for LLM-powered blocker briefs | Optional (fallback included) |
+| `SMTP_HOST` / `SMTP_PORT` | SMTP host and port for email verification and password reset | Optional in dev / Required in prod |
+| `SMTP_USER` / `SMTP_PASSWORD` | SMTP authentication credentials | Optional |
+| `SMTP_FROM` | Outgoing email sender string | `PulseFlow <hello@example.com>` |
+| `GOOGLE_CLIENT_ID` / `_SECRET` | Google OAuth credentials (`/api/auth/callback/google`) | Optional |
+| `GITHUB_CLIENT_ID` / `_SECRET` | GitHub OAuth credentials (`/api/auth/callback/github`) | Optional |
+| `APPLE_CLIENT_ID` / `_TEAM_ID` | Apple Sign-In credentials and `.p8` private key | Optional |
+| `OIDC_ENABLED` / `OIDC_ISSUER` | Generic OpenID Connect provider (e.g. USAR FOSS Club) | Optional |
+
+---
+
+## 🔒 Security & Operations
+
+- **Session Management**: Handled securely via [Better Auth](https://www.better-auth.com/) with HTTP-only cookies and cryptographic hashing.
+- **Role-Based Permissions**: Strict authorization checks enforce workspace (`LEADER`, `MEMBER`) and project permissions (`ADMIN`, `MEMBER`, `MENTOR`).
+- **Encrypted Backups**: Built-in script `scripts/backup-database.mjs` supports `age` asymmetric encryption for zero-knowledge disaster recovery.
+- **AI Quotas & Boundaries**: Blocker brief generation is protected by sliding-window rate limits (10 req/member/hr, 1 gen/thread/min, 12s timeout) to prevent API exhaustion.
+
+For operational procedures and runbooks:
+- 📖 [Operations & Disaster Recovery Runbook](docs/operations.md)
+- 🛡 [Project Access & Authorization Model](docs/project-access-plan.md)
+- 🔑 [OIDC & Single Sign-On Guide](docs/oidc-login.md)
+- ✅ [Task Review & Approval Workflow](docs/task-review.md)
+
+---
+
+## 🤝 Contributing
+
+Contributions, feedback, and ideas are warmly welcomed!
+
+1. Fork this repository: [kaushikharsh99/pulseflow](https://github.com/kaushikharsh99/pulseflow)
+2. Create a feature branch: `git checkout -b feature/my-new-feature`
+3. Commit your changes: `git commit -m "feat: add capability"`
+4. Push to the branch: `git push origin feature/my-new-feature`
+5. Open a Pull Request on GitHub.
+
+---
+
+<div align="center">
+
+**PulseFlow** • Built for the work between the work.
+
+✳ *Small steps, clearer days.*
+
+</div>
